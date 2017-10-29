@@ -13,28 +13,6 @@
     <main></main>
     <script>
 
-        /*function toYAML(obj){
-
-            const wrapValueTag = (value)=> `<span class="value">${value}</span>`;
-
-            if(["number", "string"].some((typeName)=> typeof(obj) === typeName)) return wrapValueTag(JSON.stringify(obj));
-            if(obj === null) return wrapValueTag("~");
-            if(!Object.keys(obj).length) return wrapValueTag("{}");
-
-            return Object.keys(obj).map((keyName)=>{
-                let
-                    preamble = `${Array.isArray(obj) ? `${wrapValueTag('-')} ` : `<span class="key">${keyName}</span>${wrapValueTag(':')} `}`,
-                    value = obj[keyName],
-                    valueLines = toYAML(value).split('\n'),
-                    multiline = (value !== null && typeof(value) === "object" && !!Object.keys(value).length);
-
-                return preamble + (multiline ? "\n" : "") + valueLines.map((line, index)=> {
-                    return (multiline ? "  " : "") + line;
-                }).join('\n');
-            }).join('\n');
-        }*/
-
-
         let
             uiBus = Kefir.pool(),
             sendUiMessage = _.flow(Kefir.constant, uiBus.plug.bind(uiBus));
@@ -96,7 +74,6 @@
                                 [
                                     h1({}, deploymentId),
                                     select({ onChange: ({ target: { selectedIndex } })=> sendUiMessage({ type: "select_version", deploymentId, versionIndex: selectedIndex }) }, versions.map(({ type }, version)=> option({ class: _.compact([type === "DELETED" && "deleted"]).join('') }, `Revision #${ versions.length - version }`))),
-                                    //code({ disabled: true, dangerouslySetInnerHTML: { __html: getDocument(selectedDeploymentVersions[deploymentId] || 0, versions) } })
                                     code({ disabled: true }, getDocument(selectedDeploymentVersions[deploymentId] || 0, versions))
                                 ]
                             ))
