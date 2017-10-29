@@ -1,0 +1,78 @@
+html {
+
+  @background-color: #eee;
+  @text-color: #444;
+
+  width: 100%;
+
+  > body {
+    background-color: @background-color;
+    width: 100%;
+    font-family: Arial;
+  }
+
+  main {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    align-content: flex-start;
+  }
+
+  div.deployment {
+    flex-basis: 10rem;
+    //flex-grow: 1;
+    box-sizing: border-box;
+    margin: 1rem;
+
+    > h1 {
+      color: darken(@background-color, 40%);
+      font-size: 1rem;
+      text-align: center;
+      background-color: @text-color;
+      padding: 0.5rem;
+      box-sizing: border-box;
+    }
+
+    > code {
+      background-color: #333;
+      color: @text-color;
+      border: solid 1px lighten(@text-color, 50%);
+      display: block;
+      width: 100%;
+      overflow: scroll;
+      white-space: pre;
+      height: 20rem;
+      padding: 0.5rem;
+
+      div {
+        margin: 0 0 0 0.3rem;
+      }
+
+      span.key {
+        color: #9e87fb;
+      }
+
+      span.value {
+        color: #f8f8f2;
+      }
+    }
+
+    > select {
+      > option {
+        &.deleted {
+          color: lighten(@text-color, 50%);
+          text-decoration: line-through;
+        }
+      }
+    }
+
+    &.active {
+      > h1 {
+        color: @background-color;
+        &:after {
+          content: " [Active]"
+        }
+      }
+    }
+  }
+}

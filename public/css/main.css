@@ -1,0 +1,57 @@
+html {
+  width: 100%;
+}
+html > body {
+  background-color: #eee;
+  width: 100%;
+  font-family: Arial;
+}
+html main {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  align-content: flex-start;
+}
+html div.deployment {
+  flex-basis: 10rem;
+  box-sizing: border-box;
+  margin: 1rem;
+}
+html div.deployment > h1 {
+  color: #888888;
+  font-size: 1rem;
+  text-align: center;
+  background-color: #444;
+  padding: 0.5rem;
+  box-sizing: border-box;
+}
+html div.deployment > code {
+  background-color: #333;
+  color: #444;
+  border: solid 1px #c3c3c3;
+  display: block;
+  width: 100%;
+  overflow: scroll;
+  white-space: pre;
+  height: 20rem;
+  padding: 0.5rem;
+}
+html div.deployment > code div {
+  margin: 0 0 0 0.3rem;
+}
+html div.deployment > code span.key {
+  color: #9e87fb;
+}
+html div.deployment > code span.value {
+  color: #f8f8f2;
+}
+html div.deployment > select > option.deleted {
+  color: #c3c3c3;
+  text-decoration: line-through;
+}
+html div.deployment.active > h1 {
+  color: #eee;
+}
+html div.deployment.active > h1:after {
+  content: " [Active]";
+}
