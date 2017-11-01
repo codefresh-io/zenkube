@@ -8,7 +8,7 @@ const
 
 let app = express();
 app.use(express.static('public'));
-app.get('/logs', (req, res)=>{
-    res.sendFile(path.join(__dirname, './data/deployment_changes.json'));
+app.get('/log', (req, res)=>{
+    res.sendFile(path.join(__dirname, './data/dump.jsonl'));
 });
 app.listen(8080);

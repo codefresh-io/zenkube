@@ -2,86 +2,118 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Deployment Browser</title>
+    <title>Explorer</title>
     <script src="https://unpkg.com/lodash@4.17.4/lodash.js"></script>
     <script src="https://unpkg.com/kefir@3.7.4/dist/kefir.js"></script>
     <script src="https://unpkg.com/preact@8.2.6/dist/preact.js"></script>
     <link rel="stylesheet" href="css/main.css"/>
-
 </head>
 <body>
-    <main></main>
-    <script>
+<input type="range" min="0" max="100" step="1"/>
+<main/>
 
-        let
-            uiBus = Kefir.pool(),
-            sendUiMessage = _.flow(Kefir.constant, uiBus.plug.bind(uiBus));
+<script>
 
-        let deploymentsProperty = Kefir
-            .fromPromise(fetch('/logs').then((res)=> res.json()))
-            .map(_.flow(_.reverse, _.partial(_.groupBy, _, 'id')))
-            .toProperty(()=> []);
+    const VISUAL_BUFFER_SIZE = 5000;
 
-        let selectedDeploymentVersionsProperty = uiBus
-            .filter(_.matches({ type: "select_version" }))
-            .map(({ deploymentId, versionIndex })=>({ [deploymentId]: versionIndex }))
-            .scan(_.merge, {});
+    let
+        uiBus = Kefir.pool(),
+        sendUiMessage = _.flow(Kefir.constant, uiBus.plug.bind(uiBus));
 
-        // GUI Cycle
-        Kefir
-            .combine([deploymentsProperty, selectedDeploymentVersionsProperty])
-            .onValue((function(){
+    let rawStream = Kefir
+        .fromPromise(fetch('log').then((res)=> res.text()).then(_.partial(_.split, _, '\n')))
+        .flatten()
+        .map(_.partial(_.attempt, JSON.parse))
+        .filter(_.negate(_.isError));
 
-                const toPreactYAML = (function(){
-                    const formatters = [
-                        { test: (obj)=> ["number", "string"].some((typeName)=> typeof(obj) === typeName), format: (obj)=> preact.h('span', { class: "value" }, JSON.stringify(obj)) },
-                        { test: (obj)=> obj === null, format: ()=> preact.h('span', { class: "value" }, "~") },
-                        { test: _.isEmpty, format: ()=> preact.h('span', { class: "value" }, "{}") },
-                        {
-                            test: ()=> true,
-                            format: (obj)=> {
-                                return preact.h('div', {}, Object
-                                    .keys(obj)
-                                    .map((keyName)=> {
-                                        let value = obj[keyName];
-                                        return preact.h('div', {}, [
-                                            Array.isArray(obj) ? preact.h('span', { class: "value" }, "- ") : [preact.h('span', { "class": "key" }, [keyName]), preact.h('span', { "class": "value"}, [": "])],
-                                            toPreactYAML(value)
-                                        ]);
-                                    })
-                                );
-                            }
+    let deploymentsProperty = rawStream
+        .slidingWindow(VISUAL_BUFFER_SIZE)
+        .debounce()
+        .map(_.partial(_.sortBy, _, 'timestamp'))
+        .map((buffer)=> {
+            return _(buffer)
+                .chain()
+                .groupBy('event.object.metadata.uid')
+                .map((events, id)=>({
+                    id,
+                    create: _.flow(_.first, _.property('event.object.metadata.creationTimestamp'), (utcStr)=> new Date(utcStr))(events),
+                    name: _.flow(_.first, _.property('event.object.metadata.name'))(events),
+                    revision: _.uniqBy(_.map(events, 'event.object.spec'), JSON.stringify),
+                    destroy: _(events).chain().find({ event: { type: "DELETED" }}).get('timestamp').thru((utcStr)=> utcStr && new Date(utcStr)).value(),
+                    snapshot: _(events).chain().filter(_.matchesProperty('event.object.metadata.uid', id)).map('event.object.status').flatten().value()
+                }))
+                .value();
+        })
+        .toProperty(_.constant([]));
+
+    let selectedDeploymentVersionsProperty = uiBus
+        .filter(_.matches({ type: "select_version" }))
+        .map(({ deploymentId, versionIndex })=>({ [deploymentId]: versionIndex }))
+        .scan(_.merge, {});
+
+    // GUI Cycle
+    Kefir
+        .combine([deploymentsProperty, selectedDeploymentVersionsProperty])
+        .onValue((function(){
+            const toPreactYAML = (function(){
+                const formatters = [
+                    { test: (obj)=> ["number", "string"].some((typeName)=> typeof(obj) === typeName), format: (obj)=> preact.h('span', { class: "value" }, JSON.stringify(obj)) },
+                    { test: (obj)=> obj === null, format: ()=> preact.h('span', { class: "value" }, "~") },
+                    { test: _.isEmpty, format: ()=> preact.h('span', { class: "value" }, "{}") },
+                    {
+                        test: ()=> true,
+                        format: (obj)=> {
+                            return preact.h('div', {}, Object
+                                .keys(obj)
+                                .map((keyName)=> {
+                                    let value = obj[keyName];
+                                    return preact.h('div', {}, [
+                                        Array.isArray(obj) ? preact.h('span', { class: "value" }, "- ") : [preact.h('span', { "class": "key" }, [keyName]), preact.h('span', { "class": "value"}, [": "])],
+                                        toPreactYAML(value)
+                                    ]);
+                                })
+                            );
                         }
-                    ];
+                    }
+                ];
 
-                    return (obj)=> formatters.find(({ test })=> test(obj))["format"](obj);
-                })();
+                return (obj)=> formatters.find(({ test })=> test(obj))["format"](obj);
+            })();
+            const
+                [ main, div, h1, span, select, option, code, ul, li, header ] = ["main", "div", "h1", "span", "select", "option", "code", "ul", "li", "header"].map((name)=> _.partial(preact.h, name)),
+                { render } = preact,
+                anchorBody = document.querySelector('body'),
+                anchorMain = document.querySelector('main'),
+                formatDate = (d)=> _(["getMonth", "getDate", "getFullYear", "getHours", "getMinutes"])
+                    .map((name)=> d[name]()).zipWith([(n)=> n+1], (a, b)=> b ? b(a) : a)
+                    .map(_.partial(_.padStart, _, 2, "0"))
+                    .thru(([month, date, year, hours, minutes])=> `${[date, month, year].join('/')} ${[hours, minutes].join(':')}`)
+                    .value();
 
-                const
-                    [ main, div, h1, span, select, option, code ] = ["main", "div", "h1", "span", "select", "option", "code"].map((name)=> _.partial(preact.h, name)),
-                    { render } = preact,
-                    isActive = _.flow(_.first, _.property('type'), _.partial(_.negate(_.isEqual), 'DELETED')),
-                    getDocument = ( specVersion, docs )=> toPreactYAML(_.get(docs, `${_.clamp(specVersion, 0, docs.length)}.spec`)),
-                    anchorBody = document.querySelector('body'),
-                    anchorMain = document.querySelector('main');
+            return ([deployments, selectedDeploymentVersions])=> {
+                render(
+                    main(
+                        {},
+                        _.map(_.sortBy(deployments, ({ destroy })=> destroy ? 1 : 0), ({ id, name, destroy, revision, create })=> div(
+                            { key: id, class: _.compact(["deployment", !destroy && "active"]).join(' ') },
+                            [
+                                h1({ title: id }, name),
+                                header({},[
+                                    ul({}, _.compact([
+                                        li({ class: "create" }, formatDate(create)),
+                                        destroy && li({ class: "destroy" }, formatDate(destroy))
+                                    ])),
+                                    select({ onChange: ({ target: { selectedIndex } })=> sendUiMessage({ type: "select_version", deploymentId: id, versionIndex: selectedIndex }) }, revision.map((__, version)=> option({}, `Revision #${ revision.length - version }`)))
+                                ]),
+                                code({}, toPreactYAML(revision[(selectedDeploymentVersions[id] || 0)]))
+                            ]
+                        ))
+                    ), anchorBody, anchorMain
+                )
+            };
+        })());
 
-                return ([deployments, selectedDeploymentVersions])=> {
-                    render(
-                        main(
-                            {},
-                            _.map(deployments, (versions, deploymentId)=> div(
-                                { class: _.compact(["deployment", isActive(versions) && "active"]).join(' ') },
-                                [
-                                    h1({}, deploymentId),
-                                    select({ onChange: ({ target: { selectedIndex } })=> sendUiMessage({ type: "select_version", deploymentId, versionIndex: selectedIndex }) }, versions.map(({ type }, version)=> option({ class: _.compact([type === "DELETED" && "deleted"]).join('') }, `Revision #${ versions.length - version }`))),
-                                    code({ disabled: true }, getDocument(selectedDeploymentVersions[deploymentId] || 0, versions))
-                                ]
-                            ))
-                        ), anchorBody, anchorMain
-                    )
-                };
-            })());
+</script>
 
-    </script>
 </body>
 </html>

@@ -2,6 +2,7 @@ html {
 
   @background-color: #eee;
   @text-color: #444;
+  @key-color: #9e87fb;
 
   width: 100%;
 
@@ -20,9 +21,39 @@ html {
 
   div.deployment {
     flex-basis: 10rem;
-    //flex-grow: 1;
     box-sizing: border-box;
     margin: 1rem;
+
+    > header {
+      padding: 0.5rem 0.4rem 0.5rem 0.4rem;
+      align-items: center;
+      justify-content: space-between;
+      display: flex;
+      height: 2rem;
+      color: @text-color;
+
+      > ul {
+        order: 2;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        text-align: right;
+        font-size: 0.8rem;
+        line-height: 1.2rem;
+
+        > li.create {
+          &:before {
+            content: "Created: "
+          }
+        }
+
+        > li.destroy {
+          &:before {
+            content: "Deleted: "
+          }
+        }
+      }
+    }
 
     > h1 {
       color: darken(@background-color, 40%);
@@ -31,6 +62,7 @@ html {
       background-color: @text-color;
       padding: 0.5rem;
       box-sizing: border-box;
+      margin: 0;
     }
 
     > code {
@@ -43,13 +75,14 @@ html {
       white-space: pre;
       height: 20rem;
       padding: 0.5rem;
+      box-sizing: border-box;
 
       div {
         margin: 0 0 0 0.3rem;
       }
 
       span.key {
-        color: #9e87fb;
+        color: @key-color;
       }
 
       span.value {
@@ -68,6 +101,7 @@ html {
 
     &.active {
       > h1 {
+        background-color: @key-color;
         color: @background-color;
         &:after {
           content: " [Active]"
