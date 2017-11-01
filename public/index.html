@@ -9,12 +9,21 @@
     <link rel="stylesheet" href="css/main.css"/>
 </head>
 <body>
-<input type="range" min="0" max="100" step="1"/>
+<input id="history_picker" type="range" value="0" min="0" max="100" step="1"/>
 <main/>
 
 <script>
 
     const VISUAL_BUFFER_SIZE = 5000;
+
+    let
+        historyPickerEl = document.querySelector('input#history_picker'),
+        getCurrentHistoryPickerValue = ()=> historyPickerEl.value;
+
+    let progressProperty = Kefir
+        .fromEvents(historyPickerEl, 'change')
+        .map(getCurrentHistoryPickerValue)
+        .toProperty(getCurrentHistoryPickerValue);
 
     let
         uiBus = Kefir.pool(),
@@ -29,6 +38,8 @@
     let deploymentsProperty = rawStream
         .slidingWindow(VISUAL_BUFFER_SIZE)
         .debounce()
+        .combine(progressProperty)
+        .map(([buffer, progress])=> buffer.slice(0, Math.round(progress/100 * buffer.length)))
         .map(_.partial(_.sortBy, _, 'timestamp'))
         .map((buffer)=> {
             return _(buffer)
