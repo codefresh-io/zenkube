@@ -38,9 +38,9 @@
     let deploymentsProperty = rawStream
         .slidingWindow(VISUAL_BUFFER_SIZE)
         .debounce()
+        .map(_.partial(_.sortBy, _, 'timestamp'))
         .combine(progressProperty)
         .map(([buffer, progress])=> buffer.slice(0, Math.round(progress/100 * buffer.length)))
-        .map(_.partial(_.sortBy, _, 'timestamp'))
         .map((buffer)=> {
             return _(buffer)
                 .chain()
