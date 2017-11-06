@@ -4,21 +4,49 @@
     <meta charset="UTF-8">
     <title>Deployments List</title>
     <link rel="stylesheet" href="css/flat_list.css"/>
+    <link rel="stylesheet" href="https://unpkg.com/diff2html@2.3.2/dist/diff2html.min.css"/>
     <script src="https://unpkg.com/lodash@4.17.4/lodash.js"></script>
     <script src="https://unpkg.com/kefir@3.7.4/dist/kefir.js"></script>
     <script src="https://unpkg.com/react@16.0.0/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@16.0.0/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/imurmurhash@0.1.4/imurmurhash.min.js"></script>
     <script src="https://unpkg.com/moment@2.19.1/min/moment.min.js"></script>
+    <script src="https://unpkg.com/diff2html@2.3.2/dist/diff2html.min.js"></script>
 </head>
 <body>
 
     <main></main>
     <script>
 
-
-
         const VISUAL_BUFFER_SIZE = 5000;
+
+        let ui = (function(){
+            let emitter = _.noop;
+            return {
+                stream: Kefir.stream(({ emit })=> emitter = emit),
+                send: (message)=> emitter(message)
+            };
+        })();
+
+        let focusChangeStream = ui.stream
+            .filter(_.matches({ type: "focus-deployment" }))
+            .map(({ id, hash })=> ({
+                "main_page": "deployment-revision-view",
+                "focused_deployment_id": id,
+                "focused_deployment_revision": hash
+            }))
+            .skipDuplicates(_.isEqual);
+
+        let uiStateProperty = Kefir
+            .combine([
+                Kefir.constant({
+                    "main_page": "deployment-list",
+                    "focused_deployment_id": undefined,
+                    "focused_deployment_revision": undefined
+                }),
+                focusChangeStream.toProperty(()=>{})
+            ], _.merge)
+            .toProperty();
 
         let rawStream = Kefir
             .fromPromise(fetch('log').then((res)=> res.text()).then(_.partial(_.split, _, '\n')))
@@ -54,40 +82,98 @@
             .toProperty(_.constant([]));
 
         let domReadyProperty = Kefir
-            .fromEvents(window, 'load')
+            .fromEvents(window, 'DOMContentLoaded')
             .take(1)
             .map(()=> document.querySelector('body'))
             .toProperty();
 
+        // UI Cycle
         Kefir
             .combine([
+                uiStateProperty,
                 deploymentsProperty,
                 domReadyProperty
             ])
             .onValue((function(){
-                const [header, ul, li, main, div, time, img] = ["header", "ul", "li", "main", "div", "time", "img"].map((name)=> _.partial(React.createElement, name));
-                return function([deployments, mainElement]){
-                    return ReactDOM.render([
-                        header({ key: "header" }, ["Deployments"]),
-                        main({ key: "main" }, ul(
+
+                const [header, ul, li, main, div, time, img, span, a, code] = ["header", "ul", "li", "main", "div", "time", "img", "span", "a", "code"].map((name)=> _.partial(React.createElement, name));
+
+                const toReactYAML = (function(){
+                    const formatters = [
+                        { test: (obj)=> ["number", "string"].some((typeName)=> typeof(obj) === typeName), format: (obj)=> span({ className: "value" }, [], JSON.stringify(obj)) },
+                        { test: (obj)=> obj === null, format: ()=> span({ className: "value" }, [], "~") },
+                        { test: _.isEmpty, format: ()=> span({ className: "value" }, [], "{}") },
+                        {
+                            test: ()=> true,
+                            format: (obj)=> {
+                                return div({}, Object
+                                    .keys(obj)
+                                    .map((keyName)=> {
+                                        let value = obj[keyName];
+                                        return div({}, [],
+                                            Array.isArray(obj) ? span({ className: "value" }, [], "- ") : [span({ "className": "key" }, [], keyName), span({ "className": "value"}, [], ": ")],
+                                            toReactYAML(value)
+                                        );
+                                    })
+                                );
+                            }
+                        }
+                    ];
+
+                    return (obj)=> formatters.find(({ test })=> test(obj))["format"](obj);
+                })();
+
+                const pageHeader = (function(dictionary){
+                    return (uiState, deployments)=> header({ key: "header" }, (dictionary[uiState["main_page"]] || _.constant("N/A"))(uiState, deployments))
+                })({
+                    "deployment-list": _.template("Deployments Activity"),
+                    "deployment-revision-view": _.flow(({ focused_deployment_revision: r, focused_deployment_id: id }, deployments)=> ({
+                            focused_deployment_revision: r.toString(16),
+                            focused_deployment_name: _(deployments).chain().find({ id }).get('name').value()
+                    }), _.template(`Revision \${ focused_deployment_revision } of deployment \${ focused_deployment_name }`))
+                });
+
+                const deploymentListPage = (uiState, deployments)=>
+                    main(
+                        { key: "main", className: "deployment-list" },
+                        ul(
                             {},
                             _(deployments)
                                 .map(({ id, name, revision })=> revision.map((rev)=> _.assign({ id, name }, rev)))
                                 .flatten()
                                 .value()
                                 .map(({ id, create, hash, name })=> li(
-                                    { key: [id, hash].join('-') }, [],
+                                        { key: [id, hash].join('-') }, [],
                                         div({ className: "deployment" }, [],
                                             img({ src: `https://robohash.org/${id}.png?size=32x32` }),
-                                            div({ className: "name" }, name),
+                                            div({ className: "name" }, [],
+                                                span({}, [name]),
+                                                " was committed a new change " ,
+                                                a({ onClick: ()=> ui.send({ type: "focus-deployment", id, hash }) }, ["#", hash.toString(16)])
+                                            ),
                                             time({}, moment(create).fromNow())
                                         )
                                     )
                                 )
-                        ))
-                        ],
-                        mainElement
+                        )
                     );
+
+                const deploymentRevisionPage = ({ focused_deployment_id: id, focused_deployment_revision: revision }, deployments)=> {
+                    return main({}, [], code({}, [], toReactYAML(_(deployments).chain().find({ id }).get('revision').find({ hash: revision }).get('spec').value())));
+                };
+
+                const mainView = function(uiState, deployments){
+                    return [
+                        pageHeader(uiState, deployments),
+                        {
+                            "deployment-list": deploymentListPage,
+                            "deployment-revision-view": deploymentRevisionPage
+                        }[uiState["main_page"]](uiState, deployments)
+                    ];
+                };
+
+                return function([uiState, deployments = [], mainElement]){
+                    return ReactDOM.render(mainView(uiState, deployments), mainElement);
                 }
             })());
 

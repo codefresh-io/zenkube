@@ -2,6 +2,33 @@
 @header-background-color: #252a2e;
 @text-color: #252a2e;
 @deployment-list-separation-line-color: #e2e4e8;
+@commit-text-color: #0087E2;
+
+code {
+  @key-color: #9e87fb;
+  background-color: #333;
+  color: @text-color;
+  border: solid 1px lighten(@text-color, 50%);
+  display: block;
+  width: 100%;
+  overflow: scroll;
+  white-space: pre;
+  height: 20rem;
+  padding: 0.5rem;
+  box-sizing: border-box;
+
+  div {
+    margin: 0 0 0 0.3rem;
+  }
+
+  span.key {
+    color: @key-color;
+  }
+
+  span.value {
+    color: #f8f8f2;
+  }
+}
 
 html {
   padding: 0;
@@ -24,13 +51,16 @@ body {
     flex-basis: 55px;
     color: @background-color;
     overflow: hidden;
-    padding: 0 1rem 0 1rem;
+    padding: 0 2rem 0 2rem;
     line-height: 55px;
   }
 
   > main {
     padding: 1rem;
     flex-grow: 1;
+  }
+
+  > main.deployment-list {
 
     > ul {
       display: flex;
@@ -40,29 +70,46 @@ body {
       padding: 0;
 
       > li {
-        padding: 0.5rem;
-        line-height: 2rem;
         border-bottom: solid 1px @deployment-list-separation-line-color;
+
         &:last-child {
           border-bottom: none;
         }
 
         > div.deployment {
+          font-size: 0.9rem;
+          line-height: 4rem;
           position: relative;
-          padding: 0 0 0 40px;
+          padding: 0 0 0 3.5rem;
+          white-space: nowrap;
+
+          > div {
+            > span {
+              font-weight: bold;
+            }
+            > a {
+              color: @commit-text-color;
+              &:hover {
+                text-decoration: underline;
+                cursor: pointer;
+              }
+            }
+          }
+
           > img {
             position: absolute;
-            top: 0;
-            left: 0;
+            top: 50%;
+            left: 1rem;
             border-radius: 16px;
-            background-color: #eee;
+            background-color: #ddd;
+            transform: translateY(-50%);
           }
 
           > time {
-            font-size: 0.8rem;
+            font-size: 0.7rem;
             position: absolute;
             top: 50%;
-            right: 0;
+            right: 1rem;
             transform: translateY(-50%);
           }
         }
