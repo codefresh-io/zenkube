@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Deployments List</title>
+    <link rel="stylesheet" href="css/flat_list.css"/>
+    <script src="https://unpkg.com/lodash@4.17.4/lodash.js"></script>
+    <script src="https://unpkg.com/kefir@3.7.4/dist/kefir.js"></script>
+    <script src="https://unpkg.com/react@16.0.0/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@16.0.0/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/imurmurhash@0.1.4/imurmurhash.min.js"></script>
+    <script src="https://unpkg.com/moment@2.19.1/min/moment.min.js"></script>
+</head>
+<body>
+
+    <main></main>
+    <script>
+
+
+
+        const VISUAL_BUFFER_SIZE = 5000;
+
+        let rawStream = Kefir
+            .fromPromise(fetch('log').then((res)=> res.text()).then(_.partial(_.split, _, '\n')))
+            .flatten()
+            .map(_.partial(_.attempt, JSON.parse))
+            .filter(_.negate(_.isError));
+
+        let deploymentsProperty = rawStream
+            .slidingWindow(VISUAL_BUFFER_SIZE)
+            .debounce()
+            .map(_.partial(_.sortBy, _, 'timestamp'))
+            .map((buffer)=> {
+                return _(buffer)
+                    .chain()
+                    .groupBy('event.object.metadata.uid')
+                    .map((events, id)=>({
+                        id,
+                        create: _.flow(_.first, _.property('event.object.metadata.creationTimestamp'), (utcStr)=> new Date(utcStr))(events),
+                        name: _.flow(_.first, _.property('event.object.metadata.name'))(events),
+                        revision: _(events)
+                            .map(({ timestamp, event: { object: { spec } } })=>({
+                                create: new Date(timestamp),
+                                hash: MurmurHash3(JSON.stringify(spec)).result(),
+                                spec
+                            }))
+                            .uniqBy('hash')
+                            .value(),
+                        destroy: _(events).chain().find({ event: { type: "DELETED" }}).get('timestamp').thru((utcStr)=> utcStr && new Date(utcStr)).value(),
+                        snapshot: _(events).chain().filter(_.matchesProperty('event.object.metadata.uid', id)).map('event.object.status').flatten().value()
+                    }))
+                    .value();
+            })
+            .toProperty(_.constant([]));
+
+        let domReadyProperty = Kefir
+            .fromEvents(window, 'load')
+            .take(1)
+            .map(()=> document.querySelector('body'))
+            .toProperty();
+
+        Kefir
+            .combine([
+                deploymentsProperty,
+                domReadyProperty
+            ])
+            .onValue((function(){
+                const [header, ul, li, main, div, time, img] = ["header", "ul", "li", "main", "div", "time", "img"].map((name)=> _.partial(React.createElement, name));
+                return function([deployments, mainElement]){
+                    return ReactDOM.render([
+                        header({ key: "header" }, ["Deployments"]),
+                        main({ key: "main" }, ul(
+                            {},
+                            _(deployments)
+                                .map(({ id, name, revision })=> revision.map((rev)=> _.assign({ id, name }, rev)))
+                                .flatten()
+                                .value()
+                                .map(({ id, create, hash, name })=> li(
+                                    { key: [id, hash].join('-') }, [],
+                                        div({ className: "deployment" }, [],
+                                            img({ src: `https://robohash.org/${id}.png?size=32x32` }),
+                                            div({ className: "name" }, name),
+                                            time({}, moment(create).fromNow())
+                                        )
+                                    )
+                                )
+                        ))
+                        ],
+                        mainElement
+                    );
+                }
+            })());
+
+    </script>
+
+
+
+</body>
+</html>
