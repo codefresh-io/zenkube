@@ -3,6 +3,8 @@
 @text-color: #252a2e;
 @deployment-list-separation-line-color: #e2e4e8;
 @commit-text-color: #0087E2;
+@image-alert: url(https://unpkg.com/octicons@7.0.1/build/svg/alert.svg);
+@image-check: url(https://unpkg.com/octicons@7.0.1/build/svg/check.svg);
 
 code {
   @key-color: #9e87fb;
@@ -33,6 +35,23 @@ code {
 span.deployment-name {
   &.inactive {
     text-decoration: line-through;
+  }
+}
+
+i.deployment-status {
+
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-position: center;
+  background-image: @image-alert;
+  vertical-align: middle;
+  background-clip: content-box;
+  padding: 0 0.3rem 0 0.3rem;
+  &.online {
+    background-image: @image-check;
   }
 }
 

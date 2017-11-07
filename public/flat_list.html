@@ -78,6 +78,7 @@
                             }))
                             .uniqBy('hash')
                             .value(),
+                        online: _(events).chain().reverse().map(_.flow(_.property('event.object.status.conditions'), _.partial(_.find, _, { type: "Available" }))).first().thru(({ status } = {})=> status === "True").value(),
                         destroy: _(events).chain().find({ event: { type: "DELETED" }}).get('timestamp').thru((utcStr)=> utcStr && new Date(utcStr)).value(),
                         snapshot: _(events).chain().filter(_.matchesProperty('event.object.metadata.uid', id)).map('event.object.status').flatten().value()
                     }))
@@ -100,7 +101,7 @@
             ])
             .onValue((function(){
 
-                const [header, ul, li, main, div, time, img, span, a, code, select, option, button] = ["header", "ul", "li", "main", "div", "time", "img", "span", "a", "code", "select", "option", "button"].map((name)=> _.partial(React.createElement, name));
+                const [header, ul, li, main, div, time, img, span, a, code, select, option, button, i] = ["header", "ul", "li", "main", "div", "time", "img", "span", "a", "code", "select", "option", "button", "i"].map((name)=> _.partial(React.createElement, name));
 
                 const deploymentName = (deployment, onClick = _.noop)=> span({ onClick, className: _.compact(["deployment-name", deployment["destroy"] && "inactive"]).join(' ') }, deployment["name"]);
 
@@ -139,10 +140,6 @@
                 })({
                     [MAIN_PAGE_DEPLOYMENT_LIST]: _.constant("Deployments Activity"),
                     [MAIN_PAGE_DEPLOYMENT_REVISION_VIEW]: ({ focused_deployment_revision: r, focused_deployment_id: id }, deployments)=> ["Revision ", r.toString(16), " of deployment ", deploymentName(_(deployments).find({ id }))]
-                    /*[MAIN_PAGE_DEPLOYMENT_REVISION_VIEW]: _.flow(({ focused_deployment_revision: r, focused_deployment_id: id }, deployments)=> ({
-                            focused_deployment_revision: r.toString(16),
-                            focused_deployment_name: deploymentName(_(deployments).find({ id }))
-                    }), _.template(`Revision \${ focused_deployment_revision } of deployment \${ focused_deployment_name }`))*/
                 });
 
                 const deploymentListPage = (uiState, deployments)=>
@@ -151,16 +148,16 @@
                         ul(
                             {},
                             _(deployments)
-                                .map(({ id, name, revision, destroy })=> revision.map((rev)=> _.assign({ id, name, destroy }, rev)))
+                                .map(({ id, name, revision, destroy, online })=> revision.map((rev)=> _.assign({ id, name, destroy, online }, rev)))
                                 .flatten()
                                 .value()
-                                .map(({ id, create, hash, name, destroy })=> li(
+                                .map(({ id, create, hash, name, destroy, online })=> li(
                                         { key: [id, hash].join('-') }, [],
                                         div({ className: "deployment" }, [],
                                             img({ src: `https://robohash.org/${id}.png?size=32x32` }),
                                             div({ className: "name" }, [],
+                                                i({ title: online ? "Last status was OK" : "Last status failed or not available", className: _.compact(["deployment-status", online && "online"]).join(' ') }),
                                                 deploymentName({ name, destroy }),
-                                                //span({}, [name]),
                                                 " was committed a new change " ,
                                                 a({ onClick: ()=> ui.send({ type: "focus-deployment-revision", id, hash }) }, ["#", hash.toString(16)])
                                             ),
