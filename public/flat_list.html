@@ -18,7 +18,10 @@
     <main></main>
     <script>
 
-        const VISUAL_BUFFER_SIZE = 5000;
+        const
+            VISUAL_BUFFER_SIZE = 5000,
+            MAIN_PAGE_DEPLOYMENT_LIST = "deployment-list",
+            MAIN_PAGE_DEPLOYMENT_REVISION_VIEW = "deployment-revision-view";
 
         let ui = (function(){
             let emitter = _.noop;
@@ -29,23 +32,24 @@
         })();
 
         let focusChangeStream = ui.stream
-            .filter(_.matches({ type: "focus-deployment" }))
+            .filter(_.matches({ type: "focus-deployment-revision" }))
             .map(({ id, hash })=> ({
-                "main_page": "deployment-revision-view",
+                "main_page": MAIN_PAGE_DEPLOYMENT_REVISION_VIEW,
                 "focused_deployment_id": id,
                 "focused_deployment_revision": hash
-            }))
-            .skipDuplicates(_.isEqual);
+            }));
 
-        let uiStateProperty = Kefir
-            .combine([
-                Kefir.constant({
-                    "main_page": "deployment-list",
-                    "focused_deployment_id": undefined,
-                    "focused_deployment_revision": undefined
-                }),
-                focusChangeStream.toProperty(()=>{})
-            ], _.merge)
+        let backStream = ui.stream.filter(_.matches({ type: "back" })).map(_.constant({ "main_page": MAIN_PAGE_DEPLOYMENT_LIST }));
+
+        let uiStateProperty = Kefir.merge([
+                focusChangeStream,
+                backStream
+            ])
+            .scan(_.merge, {
+                "main_page": MAIN_PAGE_DEPLOYMENT_LIST,
+                "focused_deployment_id": undefined,
+                "focused_deployment_revision": undefined
+            })
             .toProperty();
 
         let rawStream = Kefir
@@ -96,7 +100,9 @@
             ])
             .onValue((function(){
 
-                const [header, ul, li, main, div, time, img, span, a, code] = ["header", "ul", "li", "main", "div", "time", "img", "span", "a", "code"].map((name)=> _.partial(React.createElement, name));
+                const [header, ul, li, main, div, time, img, span, a, code, select, option, button] = ["header", "ul", "li", "main", "div", "time", "img", "span", "a", "code", "select", "option", "button"].map((name)=> _.partial(React.createElement, name));
+
+                const deploymentName = (deployment, onClick = _.noop)=> span({ onClick, className: _.compact(["deployment-name", deployment["destroy"] && "inactive"]).join(' ') }, deployment["name"]);
 
                 const toReactYAML = (function(){
                     const formatters = [
@@ -106,14 +112,14 @@
                         {
                             test: ()=> true,
                             format: (obj)=> {
-                                return div({}, Object
+                                return div({}, [], ...Object
                                     .keys(obj)
                                     .map((keyName)=> {
                                         let value = obj[keyName];
-                                        return div({}, [],
-                                            Array.isArray(obj) ? span({ className: "value" }, [], "- ") : [span({ "className": "key" }, [], keyName), span({ "className": "value"}, [], ": ")],
+                                        return div({}, [], ..._.flatten([
+                                            Array.isArray(obj) ? span({ className: "value" }, [], "- ") : [span({ className: "key" }, [], keyName), span({ className: "value"}, [], ": ")],
                                             toReactYAML(value)
-                                        );
+                                        ]));
                                     })
                                 );
                             }
@@ -124,32 +130,39 @@
                 })();
 
                 const pageHeader = (function(dictionary){
-                    return (uiState, deployments)=> header({ key: "header" }, (dictionary[uiState["main_page"]] || _.constant("N/A"))(uiState, deployments))
+                    return (uiState, deployments)=>
+                        header(
+                            { key: "header" }, [],
+                            ..._.compact([(dictionary[uiState["main_page"]] || _.constant("N/A"))(uiState, deployments),
+                            uiState["main_page"] !== MAIN_PAGE_DEPLOYMENT_LIST && button({ onClick: ()=> ui.send({ type: "back" }) }, ["Back"])])
+                        )
                 })({
-                    "deployment-list": _.template("Deployments Activity"),
-                    "deployment-revision-view": _.flow(({ focused_deployment_revision: r, focused_deployment_id: id }, deployments)=> ({
+                    [MAIN_PAGE_DEPLOYMENT_LIST]: _.constant("Deployments Activity"),
+                    [MAIN_PAGE_DEPLOYMENT_REVISION_VIEW]: ({ focused_deployment_revision: r, focused_deployment_id: id }, deployments)=> ["Revision ", r.toString(16), " of deployment ", deploymentName(_(deployments).find({ id }))]
+                    /*[MAIN_PAGE_DEPLOYMENT_REVISION_VIEW]: _.flow(({ focused_deployment_revision: r, focused_deployment_id: id }, deployments)=> ({
                             focused_deployment_revision: r.toString(16),
-                            focused_deployment_name: _(deployments).chain().find({ id }).get('name').value()
-                    }), _.template(`Revision \${ focused_deployment_revision } of deployment \${ focused_deployment_name }`))
+                            focused_deployment_name: deploymentName(_(deployments).find({ id }))
+                    }), _.template(`Revision \${ focused_deployment_revision } of deployment \${ focused_deployment_name }`))*/
                 });
 
                 const deploymentListPage = (uiState, deployments)=>
                     main(
-                        { key: "main", className: "deployment-list" },
+                        { className: "deployment-list" },
                         ul(
                             {},
                             _(deployments)
-                                .map(({ id, name, revision })=> revision.map((rev)=> _.assign({ id, name }, rev)))
+                                .map(({ id, name, revision, destroy })=> revision.map((rev)=> _.assign({ id, name, destroy }, rev)))
                                 .flatten()
                                 .value()
-                                .map(({ id, create, hash, name })=> li(
+                                .map(({ id, create, hash, name, destroy })=> li(
                                         { key: [id, hash].join('-') }, [],
                                         div({ className: "deployment" }, [],
                                             img({ src: `https://robohash.org/${id}.png?size=32x32` }),
                                             div({ className: "name" }, [],
-                                                span({}, [name]),
+                                                deploymentName({ name, destroy }),
+                                                //span({}, [name]),
                                                 " was committed a new change " ,
-                                                a({ onClick: ()=> ui.send({ type: "focus-deployment", id, hash }) }, ["#", hash.toString(16)])
+                                                a({ onClick: ()=> ui.send({ type: "focus-deployment-revision", id, hash }) }, ["#", hash.toString(16)])
                                             ),
                                             time({}, moment(create).fromNow())
                                         )
@@ -159,15 +172,30 @@
                     );
 
                 const deploymentRevisionPage = ({ focused_deployment_id: id, focused_deployment_revision: revision }, deployments)=> {
-                    return main({}, [], code({}, [], toReactYAML(_(deployments).chain().find({ id }).get('revision').find({ hash: revision }).get('spec').value())));
+                    let currentRevision = _(deployments).chain().find({ id }).get('revision').find({ hash: revision }).value();
+                    return main(
+                        { className: "focus-deployment-revision" }, [],
+                        header({}, [],
+                            "Revision ",
+                            select(
+                                {
+                                    value: revision,
+                                    onChange: (e)=> ui.send({ type: "focus-deployment-revision", id, hash: +e.target.value })
+                                },
+                                _(deployments).chain().find({ id }).get('revision', []).map(({ hash })=> option({ value: hash }, hash.toString(16))).value()
+                            ),
+                            time({ className: "captured" }, ` from event captured ${moment(currentRevision["create"]).fromNow()}`)
+                        ),
+                        code({}, [], toReactYAML(_(currentRevision).chain().get('spec').value()))
+                    );
                 };
 
                 const mainView = function(uiState, deployments){
                     return [
                         pageHeader(uiState, deployments),
                         {
-                            "deployment-list": deploymentListPage,
-                            "deployment-revision-view": deploymentRevisionPage
+                            [MAIN_PAGE_DEPLOYMENT_LIST]: deploymentListPage,
+                            [MAIN_PAGE_DEPLOYMENT_REVISION_VIEW]: deploymentRevisionPage
                         }[uiState["main_page"]](uiState, deployments)
                     ];
                 };
@@ -178,8 +206,5 @@
             })());
 
     </script>
-
-
-
 </body>
 </html>

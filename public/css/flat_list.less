@@ -30,6 +30,12 @@ code {
   }
 }
 
+span.deployment-name {
+  &.inactive {
+    text-decoration: line-through;
+  }
+}
+
 html {
   padding: 0;
   margin: 0;
@@ -53,11 +59,30 @@ body {
     overflow: hidden;
     padding: 0 2rem 0 2rem;
     line-height: 55px;
+    position: relative;
+
+
+    > button {
+      position: absolute;
+      right: 2rem;
+      top: 50%;
+      transform: translateY(-50%);
+    }
   }
 
   > main {
     padding: 1rem;
     flex-grow: 1;
+  }
+
+  > main.focus-deployment-revision {
+    > header {
+      padding: 1rem 0 1rem 0;
+      > time {
+        font-size: 0.8rem;
+        font-style: italic;
+      }
+    }
   }
 
   > main.deployment-list {
@@ -77,6 +102,14 @@ body {
         }
 
         > div.deployment {
+
+          span.deployment-name {
+            color: @commit-text-color;
+            &.inactive {
+              color: lighten(@commit-text-color, 20%);
+            }
+          }
+
           font-size: 0.9rem;
           line-height: 4rem;
           position: relative;
