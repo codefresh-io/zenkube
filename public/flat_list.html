@@ -35,8 +35,7 @@
 
         let urlStream = Kefir
             .fromEvents(window, 'popstate')
-            .map(()=> window.location.pathname)
-            .skipDuplicates();
+            .map(()=> window.location.pathname);
 
         let focusChangeStream = ui.stream
             .filter(_.matches({ type: "focus-deployment-revision" }))
