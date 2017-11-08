@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Deployments List</title>
-    <link rel="stylesheet" href="css/flat_list.css"/>
+    <link rel="stylesheet" href="/css/flat_list.css"/>
     <link rel="stylesheet" href="https://unpkg.com/diff2html@2.3.2/dist/diff2html.min.css"/>
     <script src="https://unpkg.com/lodash@4.17.4/lodash.js"></script>
     <script src="https://unpkg.com/kefir@3.7.4/dist/kefir.js"></script>
@@ -23,7 +23,7 @@
             MAIN_PAGE_DEPLOYMENT_LIST = "deployment-list",
             MAIN_PAGE_DEPLOYMENT_REVISION_VIEW = "deployment-revision-view";
 
-        const { pathname: basePath } = window.location;
+        const basePath = "/";
 
         let ui = (function(){
             let emitter = _.noop;
@@ -35,7 +35,8 @@
 
         let urlStream = Kefir
             .fromEvents(window, 'popstate')
-            .map(()=> window.location.pathname);
+            .map(()=> window.location.pathname)
+            .toProperty(()=> window.location.pathname);
 
         let focusChangeStream = ui.stream
             .filter(_.matches({ type: "focus-deployment-revision" }))
@@ -45,7 +46,7 @@
                         let [, id, hash] = url.match(regEx);
                         return { id, hash: parseInt(hash, 16) }
                     });
-                })(new RegExp(basePath + "\/([a-z0-9-]{36})\/([0-9a-z]+)$")) ///\/([a-z0-9-]{36})\/([0-9a-z]+)$/
+                })(new RegExp(basePath + "([a-z0-9-]{36})\/([0-9a-z]+)$")) ///\/([a-z0-9-]{36})\/([0-9a-z]+)$/
             )
             .map(({ id, hash })=> ({
                 "main_page": MAIN_PAGE_DEPLOYMENT_REVISION_VIEW,
@@ -54,7 +55,7 @@
             }));
 
         let backStream = ui.stream
-            .filter(_.matches({ type: "back" }))
+            .filter(_.matches({ type: "show_deployment_list" }))
             .merge(urlStream.filter((url)=> url === basePath))
             .map(_.constant({ "main_page": MAIN_PAGE_DEPLOYMENT_LIST }));
 
@@ -70,7 +71,7 @@
             .toProperty();
 
         let rawStream = Kefir
-            .fromPromise(fetch('log').then((res)=> res.text()).then(_.partial(_.split, _, '\n')))
+            .fromPromise(fetch('/log').then((res)=> res.text()).then(_.partial(_.split, _, '\n')))
             .flatten()
             .map(_.partial(_.attempt, JSON.parse))
             .filter(_.negate(_.isError));
@@ -117,7 +118,7 @@
                         return basePath;
                     break;
                     case MAIN_PAGE_DEPLOYMENT_REVISION_VIEW:
-                        return [basePath, ..._.zipWith([_.identity, (str)=> str.toString(16)] ,_.at(state, 'focused_deployment_id', 'focused_deployment_revision'), (f, d)=> f(d))].join('/')
+                        return basePath + [..._.zipWith([_.identity, (str)=> str.toString(16)] ,_.at(state, 'focused_deployment_id', 'focused_deployment_revision'), (f, d)=> f(d))].join('/')
                     break;
                 }
             })
@@ -168,7 +169,7 @@
                         header(
                             { key: "header" }, [],
                             ..._.compact([(dictionary[uiState["main_page"]] || _.constant("N/A"))(uiState, deployments),
-                            uiState["main_page"] !== MAIN_PAGE_DEPLOYMENT_LIST && button({ onClick: ()=> ui.send({ type: "back" }) }, ["Back"])])
+                            uiState["main_page"] !== MAIN_PAGE_DEPLOYMENT_LIST && button({ onClick: ()=> ui.send({ type: "show_deployment_list" }) }, ["Back"])])
                         )
                 })({
                     [MAIN_PAGE_DEPLOYMENT_LIST]: _.constant("Deployments Activity"),

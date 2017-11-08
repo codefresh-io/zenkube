@@ -4,11 +4,13 @@ const
     kefir = require('kefir'),
     express = require('express');
 
-
-
 let app = express();
-app.use(express.static('public'));
+
 app.get('/log', (req, res)=>{
     res.sendFile(path.join(__dirname, './data/dump.jsonl'));
+});
+app.use(express.static('public'));
+app.use('/', (req, res)=>{
+    res.sendFile(path.join(__dirname, './public/flat_list.html'));
 });
 app.listen(8080);
