@@ -23,6 +23,8 @@
             MAIN_PAGE_DEPLOYMENT_LIST = "deployment-list",
             MAIN_PAGE_DEPLOYMENT_REVISION_VIEW = "deployment-revision-view";
 
+        const { pathname: basePath } = window.location;
+
         let ui = (function(){
             let emitter = _.noop;
             return {
@@ -31,21 +33,37 @@
             };
         })();
 
+        let urlStream = Kefir
+            .fromEvents(window, 'popstate')
+            .map(()=> window.location.pathname)
+            .skipDuplicates();
+
         let focusChangeStream = ui.stream
             .filter(_.matches({ type: "focus-deployment-revision" }))
+            .merge(
+                (function(regEx){
+                    return urlStream.filter((url)=> regEx.test(url)).map((url)=>{
+                        let [, id, hash] = url.match(regEx);
+                        return { id, hash: parseInt(hash, 16) }
+                    });
+                })(/\/([a-z0-9-]{36})\/([0-9a-z]+)$/)
+            )
             .map(({ id, hash })=> ({
                 "main_page": MAIN_PAGE_DEPLOYMENT_REVISION_VIEW,
                 "focused_deployment_id": id,
                 "focused_deployment_revision": hash
             }));
 
-        let backStream = ui.stream.filter(_.matches({ type: "back" })).map(_.constant({ "main_page": MAIN_PAGE_DEPLOYMENT_LIST }));
+        let backStream = ui.stream
+            .filter(_.matches({ type: "back" }))
+            .merge(urlStream.filter((url)=> url === basePath))
+            .map(_.constant({ "main_page": MAIN_PAGE_DEPLOYMENT_LIST }));
 
         let uiStateProperty = Kefir.merge([
                 focusChangeStream,
                 backStream
             ])
-            .scan(_.merge, {
+            .scan((ac, cur)=> _.merge({}, ac, cur), {
                 "main_page": MAIN_PAGE_DEPLOYMENT_LIST,
                 "focused_deployment_id": undefined,
                 "focused_deployment_revision": undefined
@@ -91,6 +109,22 @@
             .take(1)
             .map(()=> document.querySelector('body'))
             .toProperty();
+
+        // History Management
+        uiStateProperty
+            .map((state)=> {
+                switch(state["main_page"]){
+                    case MAIN_PAGE_DEPLOYMENT_LIST:
+                        return basePath;
+                    break;
+                    case MAIN_PAGE_DEPLOYMENT_REVISION_VIEW:
+                        return [basePath, ..._.zipWith([_.identity, (str)=> str.toString(16)] ,_.at(state, 'focused_deployment_id', 'focused_deployment_revision'), (f, d)=> f(d))].join('/')
+                    break;
+                }
+            })
+            .skipDuplicates()
+            .filter((newUrl)=> newUrl !== window.location.pathname)
+            .onValue(_.partial(window.history.pushState.bind(window.history), {}, ''));
 
         // UI Cycle
         Kefir
@@ -139,7 +173,7 @@
                         )
                 })({
                     [MAIN_PAGE_DEPLOYMENT_LIST]: _.constant("Deployments Activity"),
-                    [MAIN_PAGE_DEPLOYMENT_REVISION_VIEW]: ({ focused_deployment_revision: r, focused_deployment_id: id }, deployments)=> ["Revision ", r.toString(16), " of deployment ", deploymentName(_(deployments).find({ id }))]
+                    [MAIN_PAGE_DEPLOYMENT_REVISION_VIEW]: ({ focused_deployment_revision: r, focused_deployment_id: id }, deployments)=> ["Revision ", r.toString(16), " of deployment \"", deploymentName(_(deployments).find({ id })), "\""]
                 });
 
                 const deploymentListPage = (uiState, deployments)=>
