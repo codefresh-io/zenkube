@@ -20,8 +20,9 @@
 
         const
             VISUAL_BUFFER_SIZE = 5000,
-            MAIN_PAGE_DEPLOYMENT_LIST = "deployment-list",
+            MAIN_PAGE_DEPLOYMENT_LIST = "deployment-list-view",
             MAIN_PAGE_DEPLOYMENT_REVISION_VIEW = "deployment-revision-view";
+            MAIN_PAGE_DEPLOYMENT_INFO_VIEW = "deployment-info-view";
 
         const basePath = "/";
 
@@ -46,13 +47,29 @@
                         let [, id, hash] = url.match(regEx);
                         return { id, hash: parseInt(hash, 16) }
                     });
-                })(new RegExp(basePath + "([a-z0-9-]{36})\/([0-9a-z]+)$")) ///\/([a-z0-9-]{36})\/([0-9a-z]+)$/
+                })(new RegExp(basePath + "([a-z0-9-]{36})\/([0-9a-z]+)$"))
             )
             .map(({ id, hash })=> ({
                 "main_page": MAIN_PAGE_DEPLOYMENT_REVISION_VIEW,
                 "focused_deployment_id": id,
                 "focused_deployment_revision": hash
             }));
+
+        let deploymentInformationStream = ui.stream
+            .filter(_.matches({ type: "focus-deployment-information" }))
+            .merge(
+                (function(regEx){
+                    return urlStream.filter((url)=> regEx.test(url)).map((url)=>{
+                        let [, id] = url.match(regEx);
+                        return { id }
+                    });
+                })(new RegExp(basePath + "([a-z0-9-]{36})$"))
+            )
+            .map(({ id })=>({
+                "main_page": MAIN_PAGE_DEPLOYMENT_INFO_VIEW,
+                "focused_deployment_id": id,
+            }));
+
 
         let backStream = ui.stream
             .filter(_.matches({ type: "show_deployment_list" }))
@@ -61,6 +78,7 @@
 
         let uiStateProperty = Kefir.merge([
                 focusChangeStream,
+                deploymentInformationStream,
                 backStream
             ])
             .scan((ac, cur)=> _.merge({}, ac, cur), {
@@ -137,7 +155,10 @@
 
                 const [header, ul, li, main, div, time, img, span, a, code, select, option, button, i] = ["header", "ul", "li", "main", "div", "time", "img", "span", "a", "code", "select", "option", "button", "i"].map((name)=> _.partial(React.createElement, name));
 
-                const deploymentName = (deployment, onClick = _.noop)=> span({ onClick, className: _.compact(["deployment-name", deployment["destroy"] && "inactive"]).join(' ') }, deployment["name"]);
+                const deploymentName = (deployment, onClick)=> span({
+                    "onClick": (onClick || (()=> ui.send({ type: "focus-deployment-information", id: deployment["id"] }))),
+                    "className": _.compact(["deployment-name", deployment["destroy"] && "inactive"]).join(' ')
+                }, deployment["name"]);
 
                 const toReactYAML = (function(){
                     const formatters = [
@@ -169,10 +190,11 @@
                         header(
                             { key: "header" }, [],
                             ..._.compact([(dictionary[uiState["main_page"]] || _.constant("N/A"))(uiState, deployments),
-                            uiState["main_page"] !== MAIN_PAGE_DEPLOYMENT_LIST && button({ onClick: ()=> ui.send({ type: "show_deployment_list" }) }, ["Back"])])
+                            uiState["main_page"] !== MAIN_PAGE_DEPLOYMENT_LIST && button({ onClick: ()=> ui.send({ type: "show_deployment_list" })  }, ["Close"])]) //
                         )
                 })({
                     [MAIN_PAGE_DEPLOYMENT_LIST]: _.constant("Deployments Activity"),
+                    [MAIN_PAGE_DEPLOYMENT_INFO_VIEW]: ({ focused_deployment_id: id }, deployments)=> ["Deployment \"", deploymentName(_.find(deployments, { id }), _.noop), `\" (${id})`],
                     [MAIN_PAGE_DEPLOYMENT_REVISION_VIEW]: ({ focused_deployment_revision: r, focused_deployment_id: id }, deployments)=> ["Revision ", r.toString(16), " of deployment \"", deploymentName(_(deployments).find({ id })), "\""]
                 });
 
@@ -191,7 +213,7 @@
                                             img({ src: `https://robohash.org/${id}.png?size=32x32` }),
                                             div({ className: "name" }, [],
                                                 i({ title: online ? "Last status was OK" : "Last status failed or not available", className: _.compact(["deployment-status", online && "online"]).join(' ') }),
-                                                deploymentName({ name, destroy }),
+                                                deploymentName({ id, name, destroy }),
                                                 " was committed a new change " ,
                                                 a({ onClick: ()=> ui.send({ type: "focus-deployment-revision", id, hash }) }, ["#", hash.toString(16)])
                                             ),
@@ -201,6 +223,13 @@
                                 )
                         )
                     );
+
+                const deploymentInfoPage = (uiState, deployments)=>{
+                    let currentDeployment = _.find(deployments, { id: uiState["focused_deployment_id"] });
+                    return main({}, [],
+                        deploymentName(currentDeployment)
+                    );
+                };
 
                 const deploymentRevisionPage = ({ focused_deployment_id: id, focused_deployment_revision: revision }, deployments)=> {
                     let currentRevision = _(deployments).chain().find({ id }).get('revision').find({ hash: revision }).value();
@@ -226,7 +255,8 @@
                         pageHeader(uiState, deployments),
                         {
                             [MAIN_PAGE_DEPLOYMENT_LIST]: deploymentListPage,
-                            [MAIN_PAGE_DEPLOYMENT_REVISION_VIEW]: deploymentRevisionPage
+                            [MAIN_PAGE_DEPLOYMENT_REVISION_VIEW]: deploymentRevisionPage,
+                            [MAIN_PAGE_DEPLOYMENT_INFO_VIEW]: deploymentInfoPage,
                         }[uiState["main_page"]](uiState, deployments)
                     ];
                 };
