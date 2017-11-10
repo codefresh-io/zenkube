@@ -81,6 +81,10 @@ body {
     line-height: 55px;
     position: relative;
 
+    span.deployment-name {
+      cursor: pointer;
+    }
+
     > button {
       position: absolute;
       right: 2rem;
@@ -92,6 +96,124 @@ body {
   > main {
     padding: 1rem;
     flex-grow: 1;
+  }
+
+  > main.deployment-information {
+    padding: 1rem 2rem 0 2rem;
+    position: relative;
+
+    > code {
+      color: @background-color;
+      height: 16rem;
+      overflow: scroll;
+    }
+
+    > header.deployment-state-jumbo {
+      position: absolute;
+      right: 2rem;
+      top: 2rem;
+      > div {
+        position: relative;
+        font-size: 2rem;
+        margin-left: 1rem;
+        display: inline-block;
+        width: 4rem;
+        line-height: 4rem;
+        height: 4rem;
+        background-color: @header-background-color;
+        color: @background-color;
+        text-align: center;
+        &.ok {
+          background-color: green;
+        }
+        &:after {
+          font-weight: bold;
+          width: 100%;
+          font-size: 0.7rem;
+          color: @text-color;
+          left: 0;
+          bottom: -2.8rem;
+          position: absolute;
+          text-transform: uppercase;
+        }
+        &.desired:after {
+          content: "Active";
+        }
+        &.current:after {
+          content: "Current";
+        }
+        &.available:after {
+          content: "Available";
+        }
+      }
+
+    }
+
+    > table {
+      border: solid 1px @text-color;
+      color: @text-color;
+      border-collapse: collapse;
+      > tbody {
+        > tr {
+          > td {
+            padding: 0 1rem;
+            a {
+              cursor: pointer;
+              color: @commit-text-color;
+              &:hover {
+                text-decoration: underline;
+              }
+            }
+          }
+          line-height: 2rem;
+          &:nth-child(even) {
+            background-color: #eee;
+          }
+        }
+
+      }
+    }
+
+    > h1 {
+      color: @text-color;
+      margin: 1rem 0 1rem;
+      font-size: 1.5rem;
+    }
+
+    > ul {
+      //display: flex;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      //flex-direction: column;
+      //height: 5.5rem;
+      //flex-wrap: wrap;
+      //border: solid 1px #000;
+
+      > li {
+
+        //flex-shrink: 0;
+        //flex-grow: 0;
+        margin: 0.2rem 0 0.2rem;
+        padding: 0;
+        > span.caption {
+          display: inline-block;
+          width: 7rem;
+        }
+        > span.online-status {
+          display: inline-block;
+          text-transform: uppercase;
+          color: #fff;
+          background-color: red;
+          font-size: 0.6rem;
+          line-height: 1rem;
+          padding: 0 0.2rem;
+          &.online {
+            background-color: green;
+          }
+        }
+      }
+    }
   }
 
   > main.focus-deployment-revision {
@@ -132,6 +254,18 @@ body {
         }
 
         > div.deployment {
+
+          span.deployment-name {
+            cursor: pointer;
+            &:hover {
+              text-decoration: underline;
+            }
+            &.inactive {
+              &:hover {
+                text-decoration: line-through;
+              }
+            }
+          }
 
           span.deployment-name {
             color: @commit-text-color;
