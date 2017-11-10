@@ -5,6 +5,9 @@
 @commit-text-color: #0087E2;
 @image-alert: url(https://unpkg.com/octicons@7.0.1/build/svg/alert.svg);
 @image-check: url(https://unpkg.com/octicons@7.0.1/build/svg/check.svg);
+@color-good: #5cb85c;
+@color-bad: #d9534f;
+@color-warning: #f0ad4e;
 
 code {
   @key-color: #9e87fb;
@@ -123,9 +126,7 @@ body {
         background-color: @header-background-color;
         color: @background-color;
         text-align: center;
-        &.ok {
-          background-color: green;
-        }
+
         &:after {
           font-weight: bold;
           width: 100%;
@@ -139,11 +140,20 @@ body {
         &.desired:after {
           content: "Desired";
         }
-        &.current:after {
-          content: "Current";
+        &.current {
+          background-color: @color-warning;
+          &:after {
+            content: "Current";
+          }
         }
-        &.available:after {
-          content: "Available";
+        &.available {
+          background-color: @color-warning;
+          &:after {
+            content: "Available";
+          }
+        }
+        &.ok {
+          background-color: @color-good;
         }
       }
 
@@ -204,12 +214,12 @@ body {
           display: inline-block;
           text-transform: uppercase;
           color: #fff;
-          background-color: red;
+          background-color: @color-bad;
           font-size: 0.6rem;
           line-height: 1rem;
           padding: 0 0.2rem;
           &.online {
-            background-color: green;
+            background-color: @color-good;
           }
         }
       }
