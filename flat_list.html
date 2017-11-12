@@ -166,6 +166,8 @@
 
                 const [header, ul, li, main, div, time, img, span, a, code, select, option, button, i, h1, table, tbody, tr, td] = ["header", "ul", "li", "main", "div", "time", "img", "span", "a", "code", "select", "option", "button", "i", "h1", "table", "tbody", "tr", "td"].map((name)=> _.partial(React.createElement, name));
 
+                const roboHash = (obj)=>{ obj = _.defaults(obj, { width: 32, height: 32 }); return img(_.assign({ src: `https://robohash.org/${MurmurHash3(obj["id"]).result().toString(16)}.png?size=${_.at(obj, 'width', 'height').join('x')}` }, _.omit(obj, 'src'))); };
+
                 const deploymentName = (deployment, onClick)=> span({
                     "onClick": (onClick || (() => ui.send({
                         type: "focus-deployment-information",
@@ -236,7 +238,7 @@
                                 .map(({ id, create, hash, name, destroy, online })=> li(
                                         { key: [id, hash].join('-') }, [],
                                         div({ className: "deployment" }, [],
-                                            img({ src: `https://robohash.org/${id}.png?size=32x32` }),
+                                            roboHash({ id }),
                                             div({ className: "name" }, [],
                                                 i({ title: online ? "Last status was OK" : "Last status failed or not available", className: _.compact(["deployment-status", online && "online"]).join(' ') }),
                                                 deploymentName({ id, name, destroy }),
@@ -253,8 +255,13 @@
                 const deploymentInfoPage = (uiState, deployments)=>{
                     let currentDeployment = _.find(deployments, { id: uiState["focused_deployment_id"] });
                     return main({ key: "main", className: "deployment-information" }, [],
+
                         h1({},[], 'Details'),
                         ul({},[], ..._.compact([
+                            li({}, [],
+                                span({ className: "caption" }, [], "Name: "),
+                                span({ className: "value" }, [], currentDeployment["name"])
+                            ),
                             li({}, [],
                                 span({ className: "caption" }, [], "ID: "),
                                 span({ className: "value" }, [], currentDeployment["id"])
@@ -276,10 +283,11 @@
                                 span({ className: "value" }, [], _.get(currentDeployment, 'revision', []).length)
                             )
                         ])),
-                        !currentDeployment["destroy"] && header({ className: "deployment-state-jumbo" }, [],
-                            div({ className: "desired" }, currentDeployment["replica_desire"]),
-                            div({ className: _.compact(["current", currentDeployment["replica_current"] >= currentDeployment["replica_desire"] && "ok"]).join(' ') }, currentDeployment["replica_current"]),
-                            div({ className: _.compact(["available", currentDeployment["replica_available"] >= currentDeployment["replica_desire"] && "ok"]).join(' ') }, currentDeployment["replica_available"])
+                        header({ className: "deployment-state-jumbo" }, [],
+                            roboHash({ className: "deployment-image", id: currentDeployment["id"], width: 128, height: 128 }),
+                            !currentDeployment["destroy"] && div({ className: "desired" }, currentDeployment["replica_desire"]),
+                            !currentDeployment["destroy"] && div({ className: _.compact(["current", currentDeployment["replica_current"] >= currentDeployment["replica_desire"] && "ok"]).join(' ') }, currentDeployment["replica_current"]),
+                            !currentDeployment["destroy"] && div({ className: _.compact(["available", currentDeployment["replica_available"] >= currentDeployment["replica_desire"] && "ok"]).join(' ') }, currentDeployment["replica_available"])
                         ),
                         h1({},[], 'Revisions'),
                         table({}, [], tbody({},
@@ -293,7 +301,7 @@
                         h1({},[], 'Logs'),
                         code({},[], ..._(currentDeployment["raw"]).map((entry)=>{
                             return _.get(entry, 'event.object.status.conditions', []).map((o)=>_.assign({ timestamp: entry["timestamp"] }, o));
-                        }).flatten().map((condition)=>{
+                        }).tail(1).flatten().map((condition)=>{
                             return div({}, [],
                                 formatDate(condition["timestamp"]),
                                 " - ",

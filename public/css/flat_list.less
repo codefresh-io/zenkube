@@ -9,6 +9,7 @@
 @color-good: #00cb6d;
 @color-bad: #ff2844;
 @color-warning: #ffa51c;
+@color-terminal: #43eb26;
 
 code {
   @key-color: #9e87fb;
@@ -121,7 +122,8 @@ body {
     position: relative;
 
     > code {
-      color: @background-color;
+      color: @color-terminal;
+      line-height: 1.1rem;
       height: 16rem;
       overflow: scroll;
     }
@@ -131,6 +133,19 @@ body {
       right: 2rem;
       top: 2rem;
       display: inline-block;
+
+      > img.deployment-image {
+        display: inline-block;
+        position: absolute;
+        top: 0;
+        left: -4rem;
+        //border: solid 1px @text-color;
+        background-color: @light-background-color;
+        width: 4rem;
+        height: 4rem
+        //border-radius: 32px;
+      }
+
       > div {
         position: relative;
         font-size: 2rem;
@@ -142,7 +157,6 @@ body {
         background-color: @light-background-color;
         color: @background-color;
         text-align: center;
-        //text-shadow: 1px 1px 0 rgba(0,0,0,0.2);
 
         &:after {
           text-shadow: none;
@@ -178,7 +192,6 @@ body {
           background-color: @color-good;
         }
       }
-
     }
 
     > table {
