@@ -11,7 +11,7 @@
     <script src="https://unpkg.com/react-dom@16.0.0/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/imurmurhash@0.1.4/imurmurhash.min.js"></script>
     <script src="https://unpkg.com/moment@2.19.1/min/moment.min.js"></script>
-    <script src="https://unpkg.com/diff2html@2.3.2/dist/diff2html.min.js"></script>
+    <script src="https://unpkg.com/deep-diff@0.3.8/releases/deep-diff-0.3.8.min.js"></script>
 </head>
 <body>
 
@@ -115,12 +115,7 @@
                             .value(),
                         online: _(events).chain().clone().reverse().map(_.flow(_.property('event.object.status.conditions'), _.partial(_.find, _, { type: "Available" }))).first().thru(({ status } = {})=> status === "True").value(),
                         destroy: _(events).chain().find({ event: { type: "DELETED" }}).get('timestamp').thru((utcStr)=> utcStr && new Date(utcStr)).value(),
-                        raw: events,
-
-                            /*snapshot: _(events).chain().filter(_.matchesProperty('event.object.metadata.uid', id)).map((o)=> {
-                            console.log(_.get(o, 'event.object.status', []))
-                            //_.get(o, 'event.object.status', []).map(_.unary(_.partial(_.assign,{ timestamp: o["timestamp"] })))
-                        }).flatten().value()*/
+                        raw: events
                     },
                         (function(lastEvent){
                             return {
@@ -133,7 +128,6 @@
                     ))
                     .value();
             })
-            .spy()
             .toProperty();
 
         let domReadyProperty = Kefir
@@ -180,22 +174,28 @@
                     "className": _.compact(["deployment-name", deployment["destroy"] && "inactive"]).join(' ')
                 }, deployment["name"]);
 
+                const detectChange = (obj, diff, path)=>{
+                    return { diff, path, obj, change: _.filter(diff, ({ kind, path: changePath })=> _.isEqual(changePath, path) && kind === "E") }
+                };
 
                 const toReactYAML = (function(){
                     const formatters = [
-                        { test: (obj)=> ["number", "string"].some((typeName)=> typeof(obj) === typeName), format: (obj)=> span({ className: "value" }, [], JSON.stringify(obj)) },
-                        { test: (obj)=> obj === null, format: ()=> span({ className: "value" }, [], "~") },
-                        { test: _.isEmpty, format: ()=> span({ className: "value" }, [], "{}") },
+                        { test: (obj)=> ["number", "string"].some((typeName)=> typeof(obj) === typeName), format: _.flow(detectChange, ({ obj, change })=> {
+                            return span({ className: _.compact(["value", !_.isEmpty(change) && "change"]).join(' ') }, [], JSON.stringify(obj));
+                        }) },
+                        { test: (obj)=> obj === null, format: _.flow(detectChange, ({ obj, change })=> span({ className: _.compact(["value", !_.isEmpty(change) && "change"]).join(' ') }, [], "~")) },
+                        { test: _.isEmpty, format: _.flow(detectChange, ({ obj, change })=> span({ className: _.compact(["value", !_.isEmpty(change) && "change"]) }, [], "{}")) },
                         {
                             test: ()=> true,
-                            format: (obj)=> {
+                            format: (obj, diff, path)=> {
+                                let changeSet = _(diff).filter(({ path: changePath })=> _.isEqual(changePath.slice(0, -1), path)).groupBy(({ path })=> path.join('.')).mapValues(_.flow(_.first, _.property('kind'))).value();
                                 return div({}, [], ...Object
                                     .keys(obj)
                                     .map((keyName)=> {
                                         let value = obj[keyName];
                                         return div({}, [], ..._.flatten([
-                                            Array.isArray(obj) ? span({ className: "value" }, [], "- ") : [span({ className: "key" }, [], keyName), span({ className: "value"}, [], ": ")],
-                                            toReactYAML(value)
+                                            Array.isArray(obj) ? span({ className: "value" }, [], "- ") : [span({ className: _.compact(["key", changeSet[keyName] === "N" && "new"]).join(' ') }, [], keyName), span({ className: "value"}, [], ": ")],
+                                            toReactYAML(value, diff, path.concat([keyName]))
                                         ]));
                                     })
                                 );
@@ -203,7 +203,9 @@
                         }
                     ];
 
-                    return (obj)=> formatters.find(({ test })=> test(obj))["format"](obj);
+                    return (obj, diff = [], path = [])=> {
+                        return formatters.find(({test}) => test(obj))["format"](obj, diff, path);
+                    }
                 })();
 
                 const pageHeader = (function(dictionary){
@@ -227,6 +229,7 @@
                             _(deployments)
                                 .map(({ id, name, revision, destroy, online })=> revision.map((rev)=> _.assign({ id, name, destroy, online }, rev)))
                                 .flatten()
+                                .reverse()
                                 .value()
                                 .map(({ id, create, hash, name, destroy, online })=> li(
                                         { key: [id, hash].join('-') }, [],
@@ -301,7 +304,13 @@
                 };
 
                 const deploymentRevisionPage = ({ focused_deployment_id: id, focused_deployment_revision: revision }, deployments)=> {
-                    let currentRevision = _(deployments).chain().find({ id }).get('revision').find({ hash: revision }).value();
+
+                    let
+                        currentDeployment = _.find(deployments, { id }),
+                        [currentRevision, prevRevision] = ((index)=> currentDeployment["revision"].slice(Math.max(index - 1 , 0), index + 1).reverse())(_(currentDeployment).chain().get('revision').findIndex({ hash: revision }).value());
+
+                    let diff = DeepDiff(...[prevRevision, currentRevision].map(_.flow((val)=> val || currentRevision, _.property('spec')))) || [];
+
                     return main(
                         { className: "focus-deployment-revision" }, [],
                         header({}, [],
@@ -315,7 +324,7 @@
                             ),
                             time({ className: "captured" }, ` from event captured ${moment(currentRevision["create"]).fromNow()}`)
                         ),
-                        code({}, [], toReactYAML(_(currentRevision).chain().get('spec').value()))
+                        code({}, [], toReactYAML(_(currentRevision).chain().get('spec').value(), diff)) //diffRev
                     );
                 };
 

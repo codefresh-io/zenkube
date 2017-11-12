@@ -1,13 +1,14 @@
 @background-color: #fff;
+@light-background-color: #eee;
 @header-background-color: #252a2e;
 @text-color: #252a2e;
 @deployment-list-separation-line-color: #e2e4e8;
 @commit-text-color: #0087E2;
 @image-alert: url(https://unpkg.com/octicons@7.0.1/build/svg/alert.svg);
 @image-check: url(https://unpkg.com/octicons@7.0.1/build/svg/check.svg);
-@color-good: #5cb85c;
-@color-bad: #d9534f;
-@color-warning: #f0ad4e;
+@color-good: #00cb6d;
+@color-bad: #ff2844;
+@color-warning: #ffa51c;
 
 code {
   @key-color: #9e87fb;
@@ -27,10 +28,25 @@ code {
 
   span.key {
     color: @key-color;
+    &.new {
+      color: @header-background-color;
+      box-shadow:
+              -1px 0 0 0 @color-good,
+              1px 0 0 0 @color-good;
+      background-color: @color-good;
+    }
   }
 
   span.value {
     color: #f8f8f2;
+
+    &.change {
+
+      box-shadow:
+              -3px 0 0 0 @color-warning,
+              4px 0 0 0 @color-warning;
+      background-color: @color-warning;
+    }
   }
 }
 
@@ -115,6 +131,7 @@ body {
       position: absolute;
       right: 2rem;
       top: 2rem;
+      display: inline-block;
       > div {
         position: relative;
         font-size: 2rem;
@@ -123,22 +140,28 @@ body {
         width: 4rem;
         line-height: 4rem;
         height: 4rem;
-        background-color: @header-background-color;
+        background-color: @light-background-color;
         color: @background-color;
         text-align: center;
+        //text-shadow: 1px 1px 0 rgba(0,0,0,0.2);
 
         &:after {
+          text-shadow: none;
+          line-height: 1rem;
           font-weight: bold;
           width: 100%;
-          font-size: 0.7rem;
+          font-size: 0.6rem;
           color: @text-color;
           left: 0;
-          bottom: -2.8rem;
+          bottom: -1.2rem;
           position: absolute;
           text-transform: uppercase;
         }
-        &.desired:after {
-          content: "Desired";
+        &.desired{
+          color: @text-color;
+          &:after {
+            content: "Desired";
+          }
         }
         &.current {
           background-color: @color-warning;
@@ -160,7 +183,7 @@ body {
     }
 
     > table {
-      border: solid 1px @text-color;
+      border: solid 1px @light-background-color;
       color: @text-color;
       border-collapse: collapse;
       > tbody {
@@ -177,7 +200,7 @@ body {
           }
           line-height: 2rem;
           &:nth-child(even) {
-            background-color: #eee;
+            background-color: @light-background-color;
           }
         }
 
@@ -191,19 +214,11 @@ body {
     }
 
     > ul {
-      //display: flex;
       list-style: none;
       margin: 0;
       padding: 0;
-      //flex-direction: column;
-      //height: 5.5rem;
-      //flex-wrap: wrap;
-      //border: solid 1px #000;
 
       > li {
-
-        //flex-shrink: 0;
-        //flex-grow: 0;
         margin: 0.2rem 0 0.2rem;
         padding: 0;
         > span.caption {
