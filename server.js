@@ -11,6 +11,6 @@ app.get('/log', (req, res)=>{
 });
 app.use(express.static('public'));
 app.use('/', (req, res)=>{
-    res.sendFile(path.join(__dirname, './public/flat_list.html'));
+    res.sendFile(path.join(__dirname, './flat_list.html'));
 });
 app.listen(8080);

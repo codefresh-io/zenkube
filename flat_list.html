@@ -174,6 +174,8 @@
                     "className": _.compact(["deployment-name", deployment["destroy"] && "inactive"]).join(' ')
                 }, deployment["name"]);
 
+                const formatDate = (dt)=> moment(dt).format('DD/MM/YYYY HH:MM:ss');
+
                 const detectChange = (obj, diff, path)=>{
                     return { diff, path, obj, change: _.filter(diff, ({ kind, path: changePath })=> _.isEqual(changePath, path) && kind === "E") }
                 };
@@ -217,13 +219,13 @@
                         )
                 })({
                     [MAIN_PAGE_DEPLOYMENT_LIST]: _.constant("Deployments Activity"),
-                    [MAIN_PAGE_DEPLOYMENT_INFO_VIEW]: ({ focused_deployment_id: id }, deployments)=> ["Deployment \"", deploymentName(_.find(deployments, { id }), _.noop), `\"`], //
-                    [MAIN_PAGE_DEPLOYMENT_REVISION_VIEW]: ({ focused_deployment_revision: r, focused_deployment_id: id }, deployments)=> ["Revision ", r.toString(16), " of deployment \"", deploymentName(_(deployments).find({ id })), "\""]
+                    [MAIN_PAGE_DEPLOYMENT_INFO_VIEW]: ({ focused_deployment_id: id }, deployments)=> span({}, [], ...["Deployment \"", deploymentName(_.find(deployments, { id }), _.noop), `\"`]), //
+                    [MAIN_PAGE_DEPLOYMENT_REVISION_VIEW]: ({ focused_deployment_revision: r, focused_deployment_id: id }, deployments)=> span({}, [], ...["Revision ", r.toString(16), " of deployment \"", deploymentName(_(deployments).find({ id })), "\""])
                 });
 
                 const deploymentListPage = (uiState, deployments)=>
                     main(
-                        { className: "deployment-list" },
+                        { key: "main", className: "deployment-list" },
                         ul(
                             {},
                             _(deployments)
@@ -239,7 +241,7 @@
                                                 i({ title: online ? "Last status was OK" : "Last status failed or not available", className: _.compact(["deployment-status", online && "online"]).join(' ') }),
                                                 deploymentName({ id, name, destroy }),
                                                 " was committed a new change " ,
-                                                a({ onClick: ()=> ui.send({ type: "focus-deployment-revision", id, hash }) }, ["#", hash.toString(16)])
+                                                a({ onClick: ()=> ui.send({ type: "focus-deployment-revision", id, hash }) }, [], ["#", hash.toString(16)])
                                             ),
                                             time({}, moment(create).fromNow())
                                         )
@@ -250,7 +252,7 @@
 
                 const deploymentInfoPage = (uiState, deployments)=>{
                     let currentDeployment = _.find(deployments, { id: uiState["focused_deployment_id"] });
-                    return main({ className: "deployment-information" }, [],
+                    return main({ key: "main", className: "deployment-information" }, [],
                         h1({},[], 'Details'),
                         ul({},[], ..._.compact([
                             li({}, [],
@@ -259,11 +261,11 @@
                             ),
                             li({}, [],
                                 span({ className: "caption" }, [], "Created: "),
-                                span({ className: "value" }, [], moment(_.get(currentDeployment, 'create')).format('DD/MM/YYYY HH:MM:ss'))
+                                span({ className: "value" }, [], formatDate(_.get(currentDeployment, 'create')))
                             ),
                             currentDeployment["destroy"] && li({}, [],
                                 span({ className: "caption" }, [], "Deleted: "),
-                                span({ className: "value" }, [], moment(_.get(currentDeployment, 'destroy')).format('DD/MM/YYYY HH:MM:ss'))
+                                span({ className: "value" }, [], formatDate(_.get(currentDeployment, 'destroy')))
                             ),
                             li({}, [],
                                 span({ className: "caption" }, [], "Last Status: "),
@@ -284,7 +286,7 @@
                             currentDeployment["revision"].map((revision)=>{
                                 return tr({ key: [currentDeployment["id"], revision["hash"]].join('-') }, [],
                                     td({}, a({ onClick: ()=> ui.send({ type: "focus-deployment-revision", hash: +revision["hash"], id: currentDeployment["id"] }) }, revision["hash"].toString(16))),
-                                    td({}, moment(revision["create"]).format('DD/MM/YYYY HH:MM:ss')),
+                                    td({}, formatDate(revision["create"])),
                                 )
                             })
                         )),
@@ -293,7 +295,7 @@
                             return _.get(entry, 'event.object.status.conditions', []).map((o)=>_.assign({ timestamp: entry["timestamp"] }, o));
                         }).flatten().map((condition)=>{
                             return div({}, [],
-                                moment(condition["timestamp"]).format('DD/MM/YYYY HH:MM:ss'),
+                                formatDate(condition["timestamp"]),
                                 " - ",
                                 _.at(condition, ["type", "status"]).join('='),
                                 " ",
@@ -312,7 +314,7 @@
                     let diff = DeepDiff(...[prevRevision, currentRevision].map(_.flow((val)=> val || currentRevision, _.property('spec')))) || [];
 
                     return main(
-                        { className: "focus-deployment-revision" }, [],
+                        { key: "main", className: "focus-deployment-revision" }, [],
                         header({}, [],
                             "Revision ",
                             select(
@@ -320,11 +322,11 @@
                                     value: revision,
                                     onChange: (e)=> ui.send({ type: "focus-deployment-revision", id, hash: +e.target.value })
                                 },
-                                _(deployments).chain().find({ id }).get('revision', []).map(({ hash })=> option({ value: hash }, hash.toString(16))).value()
+                                _(deployments).chain().find({ id }).get('revision', []).map(({ hash })=> option({ key: hash, value: hash }, hash.toString(16))).value()
                             ),
                             time({ className: "captured" }, ` from event captured ${moment(currentRevision["create"]).fromNow()}`)
                         ),
-                        code({}, [], toReactYAML(_(currentRevision).chain().get('spec').value(), diff)) //diffRev
+                        code({}, toReactYAML(_(currentRevision).chain().get('spec').value(), diff)) //diffRev
                     );
                 };
 
@@ -340,7 +342,7 @@
                 };
 
                 return function([uiState, deployments = [], mainElement]){
-                    return ReactDOM.render(mainView(uiState, deployments), mainElement);
+                    return ReactDOM.render(mainView(uiState, deployments), mainElement); //mainView
                 }
             })());
 
