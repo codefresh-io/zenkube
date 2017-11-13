@@ -1,121 +1,354 @@
-html {
+@background-color: #fff;
+@light-background-color: #eee;
+@header-background-color: #252a2e;
+@text-color: #252a2e;
+@deployment-list-separation-line-color: #e2e4e8;
+@commit-text-color: #0087E2;
+@image-alert: url(https://unpkg.com/octicons@7.0.1/build/svg/alert.svg);
+@image-check: url(https://unpkg.com/octicons@7.0.1/build/svg/check.svg);
+@color-good: #00cb6d;
+@color-bad: #ff2844;
+@color-warning: #ffa51c;
+@color-terminal: #43eb26;
 
-  @background-color: #eee;
-  @text-color: #444;
+code {
   @key-color: #9e87fb;
-
+  background-color: #333;
+  color: @text-color;
+  border: solid 1px lighten(@text-color, 50%);
+  display: block;
   width: 100%;
+  overflow: scroll;
+  white-space: pre;
+  padding: 0.5rem;
+  box-sizing: border-box;
 
-  > body {
-    background-color: @background-color;
-    width: 100%;
-    font-family: Arial;
-    text-align: center;
-    padding: 1rem 0 0 0;
-    margin: 0;
+  div {
+    margin: 0 0 0 0.3rem;
+  }
 
-    > input#history_picker {
-      margin: auto;
+  span.key {
+    color: @key-color;
+    &.new {
+      color: @header-background-color;
+      background-color: @color-good;
+      box-shadow:
+        -1px 0 0 0 @color-good,
+        1px 0 0 0 @color-good;
     }
   }
 
-  main {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    align-content: flex-start;
-    margin: 0;
-    padding: 0;
+  span.value {
+    color: #f8f8f2;
+
+    &.change {
+      background-color: @color-warning;
+      box-shadow:
+        -3px 0 0 0 @color-warning,
+        4px 0 0 0 @color-warning;
+    }
+  }
+}
+
+span.deployment-name {
+  &.inactive {
+    text-decoration: line-through;
+  }
+}
+
+i.deployment-status {
+
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-position: center;
+  background-image: @image-alert;
+  vertical-align: middle;
+  background-clip: content-box;
+  padding: 0 0.3rem 0 0.3rem;
+  &.online {
+    background-image: @image-check;
+  }
+}
+
+html {
+  padding: 0;
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  height: 100%;
+}
+
+body {
+  background-color: @background-color;
+  color: @text-color;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+
+  > header {
+    background-color: @header-background-color;
+    flex-shrink: 0;
+    flex-grow: 0;
+    flex-basis: 55px;
+    color: @background-color;
+    overflow: hidden;
+    padding: 0 2rem 0 2rem;
+    line-height: 55px;
+    position: relative;
+
+    span.deployment-name {
+      cursor: pointer;
+    }
+
+    > button {
+      position: absolute;
+      right: 2rem;
+      top: 50%;
+      transform: translateY(-50%);
+    }
   }
 
-  div.deployment {
-    flex-basis: 10rem;
-    box-sizing: border-box;
-    margin: 1rem;
+  > main {
+    padding: 1rem;
+    flex-grow: 1;
+  }
 
-    > header {
-      padding: 0.5rem 0.4rem 0.5rem 0.4rem;
-      align-items: center;
-      justify-content: space-between;
-      display: flex;
-      height: 2rem;
+  > main.deployment-information {
+    padding: 1rem 2rem 0 2rem;
+    position: relative;
+
+    > code {
+      color: @color-terminal;
+      line-height: 1.1rem;
+      height: 16rem;
+      overflow: scroll;
+    }
+
+    > header.deployment-state-jumbo {
+      position: absolute;
+      right: 2rem;
+      top: 2rem;
+      display: inline-block;
+
+      > img.deployment-image {
+        display: inline-block;
+        position: absolute;
+        top: 0;
+        left: -4rem;
+        //border: solid 1px @text-color;
+        background-color: @light-background-color;
+        width: 4rem;
+        height: 4rem
+        //border-radius: 32px;
+      }
+
+      > div {
+        position: relative;
+        font-size: 2rem;
+        margin-left: 1rem;
+        display: inline-block;
+        width: 4rem;
+        line-height: 4rem;
+        height: 4rem;
+        background-color: @light-background-color;
+        color: @background-color;
+        text-align: center;
+
+        &:after {
+          text-shadow: none;
+          line-height: 1rem;
+          font-weight: bold;
+          width: 100%;
+          font-size: 0.6rem;
+          color: @text-color;
+          left: 0;
+          bottom: -1.2rem;
+          position: absolute;
+          text-transform: uppercase;
+        }
+        &.desired{
+          color: @text-color;
+          &:after {
+            content: "Desired";
+          }
+        }
+        &.current {
+          background-color: @color-warning;
+          &:after {
+            content: "Current";
+          }
+        }
+        &.available {
+          background-color: @color-warning;
+          &:after {
+            content: "Available";
+          }
+        }
+        &.ok {
+          background-color: @color-good;
+        }
+      }
+    }
+
+    > table {
+      border: solid 1px @light-background-color;
       color: @text-color;
-
-      > ul {
-        order: 2;
-        margin: 0;
-        padding: 0;
-        list-style: none;
-        text-align: right;
-        font-size: 0.8rem;
-        line-height: 1.2rem;
-
-        > li.create {
-          &:before {
-            content: "Created: "
+      border-collapse: collapse;
+      > tbody {
+        > tr {
+          > td {
+            padding: 0 1rem;
+            a {
+              cursor: pointer;
+              color: @commit-text-color;
+              &:hover {
+                text-decoration: underline;
+              }
+            }
+          }
+          line-height: 2rem;
+          &:nth-child(even) {
+            background-color: @light-background-color;
           }
         }
 
-        > li.destroy {
-          &:before {
-            content: "Deleted: "
-          }
-        }
       }
     }
 
     > h1 {
-      color: darken(@background-color, 40%);
-      font-size: 1rem;
-      text-align: center;
-      background-color: @text-color;
-      padding: 0.5rem;
-      box-sizing: border-box;
-      margin: 0;
-    }
-
-    > code {
-      background-color: #333;
       color: @text-color;
-      border: solid 1px lighten(@text-color, 50%);
-      display: block;
-      width: 100%;
-      overflow: scroll;
-      white-space: pre;
-      height: 20rem;
-      padding: 0.5rem;
-      box-sizing: border-box;
-
-      div {
-        margin: 0 0 0 0.3rem;
-      }
-
-      span.key {
-        color: @key-color;
-      }
-
-      span.value {
-        color: #f8f8f2;
-      }
+      margin: 1rem 0 1rem;
+      font-size: 1.5rem;
     }
 
-    > select {
-      > option {
-        &.deleted {
-          color: lighten(@text-color, 50%);
-          text-decoration: line-through;
+    > ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+
+      > li {
+        margin: 0.2rem 0 0.2rem;
+        padding: 0;
+        > span.caption {
+          display: inline-block;
+          width: 7rem;
+        }
+        > span.online-status {
+          display: inline-block;
+          text-transform: uppercase;
+          color: #fff;
+          background-color: @color-bad;
+          font-size: 0.6rem;
+          line-height: 1rem;
+          padding: 0 0.2rem;
+          &.online {
+            background-color: @color-good;
+          }
         }
       }
     }
+  }
 
-    &.active {
-      > h1 {
-        background-color: @key-color;
-        color: @background-color;
-        &:after {
-          content: " [Active]"
+  > main.focus-deployment-revision {
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    > header {
+      flex-grow: 0;
+      padding: 0 0 2rem 0;
+      > time {
+        font-size: 0.8rem;
+        font-style: italic;
+      }
+    }
+
+    > code {
+      flex-grow: 1;
+      position: relative;
+      overflow: scroll;
+      height: 100%;
+    }
+  }
+
+  > main.deployment-list {
+
+    > ul {
+      display: flex;
+      flex-direction: column;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+
+      > li {
+        border-bottom: solid 1px @deployment-list-separation-line-color;
+
+        &:last-child {
+          border-bottom: none;
+        }
+
+        > div.deployment {
+
+          span.deployment-name {
+            cursor: pointer;
+            &:hover {
+              text-decoration: underline;
+            }
+            &.inactive {
+              &:hover {
+                text-decoration: line-through;
+              }
+            }
+          }
+
+          span.deployment-name {
+            color: @commit-text-color;
+            &.inactive {
+              color: lighten(@commit-text-color, 20%);
+            }
+          }
+
+          font-size: 0.9rem;
+          line-height: 4rem;
+          position: relative;
+          padding: 0 0 0 3.5rem;
+          white-space: nowrap;
+
+          > div {
+            > span {
+              font-weight: bold;
+            }
+            > a {
+              color: @commit-text-color;
+              &:hover {
+                text-decoration: underline;
+                cursor: pointer;
+              }
+            }
+          }
+
+          > img {
+            position: absolute;
+            top: 50%;
+            left: 1rem;
+            border-radius: 16px;
+            background-color: #ddd;
+            transform: translateY(-50%);
+          }
+
+          > time {
+            font-size: 0.7rem;
+            position: absolute;
+            top: 50%;
+            right: 1rem;
+            transform: translateY(-50%);
+          }
         }
       }
     }
   }
 }
+

@@ -1,91 +1,286 @@
-html {
-  width: 100%;
-}
-html > body {
-  background-color: #eee;
-  width: 100%;
-  font-family: Arial;
-  text-align: center;
-  padding: 1rem 0 0 0;
-  margin: 0;
-}
-html > body > input#history_picker {
-  margin: auto;
-}
-html main {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  align-content: flex-start;
-  margin: 0;
-  padding: 0;
-}
-html div.deployment {
-  flex-basis: 10rem;
-  box-sizing: border-box;
-  margin: 1rem;
-}
-html div.deployment > header {
-  padding: 0.5rem 0.4rem 0.5rem 0.4rem;
-  align-items: center;
-  justify-content: space-between;
-  display: flex;
-  height: 2rem;
-  color: #444;
-}
-html div.deployment > header > ul {
-  order: 2;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  text-align: right;
-  font-size: 0.8rem;
-  line-height: 1.2rem;
-}
-html div.deployment > header > ul > li.create:before {
-  content: "Created: ";
-}
-html div.deployment > header > ul > li.destroy:before {
-  content: "Deleted: ";
-}
-html div.deployment > h1 {
-  color: #888888;
-  font-size: 1rem;
-  text-align: center;
-  background-color: #444;
-  padding: 0.5rem;
-  box-sizing: border-box;
-  margin: 0;
-}
-html div.deployment > code {
+code {
   background-color: #333;
-  color: #444;
-  border: solid 1px #c3c3c3;
+  color: #252a2e;
+  border: solid 1px #a0aab2;
   display: block;
   width: 100%;
   overflow: scroll;
   white-space: pre;
-  height: 20rem;
   padding: 0.5rem;
   box-sizing: border-box;
 }
-html div.deployment > code div {
+code div {
   margin: 0 0 0 0.3rem;
 }
-html div.deployment > code span.key {
+code span.key {
   color: #9e87fb;
 }
-html div.deployment > code span.value {
+code span.key.new {
+  color: #252a2e;
+  background-color: #00cb6d;
+  box-shadow: -1px 0 0 0 #00cb6d, 1px 0 0 0 #00cb6d;
+}
+code span.value {
   color: #f8f8f2;
 }
-html div.deployment > select > option.deleted {
-  color: #c3c3c3;
+code span.value.change {
+  background-color: #ffa51c;
+  box-shadow: -3px 0 0 0 #ffa51c, 4px 0 0 0 #ffa51c;
+}
+span.deployment-name.inactive {
   text-decoration: line-through;
 }
-html div.deployment.active > h1 {
-  background-color: #9e87fb;
-  color: #eee;
+i.deployment-status {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-position: center;
+  background-image: url(https://unpkg.com/octicons@7.0.1/build/svg/alert.svg);
+  vertical-align: middle;
+  background-clip: content-box;
+  padding: 0 0.3rem 0 0.3rem;
 }
-html div.deployment.active > h1:after {
-  content: " [Active]";
+i.deployment-status.online {
+  background-image: url(https://unpkg.com/octicons@7.0.1/build/svg/check.svg);
+}
+html {
+  padding: 0;
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  height: 100%;
+}
+body {
+  background-color: #fff;
+  color: #252a2e;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+}
+body > header {
+  background-color: #252a2e;
+  flex-shrink: 0;
+  flex-grow: 0;
+  flex-basis: 55px;
+  color: #fff;
+  overflow: hidden;
+  padding: 0 2rem 0 2rem;
+  line-height: 55px;
+  position: relative;
+}
+body > header span.deployment-name {
+  cursor: pointer;
+}
+body > header > button {
+  position: absolute;
+  right: 2rem;
+  top: 50%;
+  transform: translateY(-50%);
+}
+body > main {
+  padding: 1rem;
+  flex-grow: 1;
+}
+body > main.deployment-information {
+  padding: 1rem 2rem 0 2rem;
+  position: relative;
+}
+body > main.deployment-information > code {
+  color: #43eb26;
+  line-height: 1.1rem;
+  height: 16rem;
+  overflow: scroll;
+}
+body > main.deployment-information > header.deployment-state-jumbo {
+  position: absolute;
+  right: 2rem;
+  top: 2rem;
+  display: inline-block;
+}
+body > main.deployment-information > header.deployment-state-jumbo > img.deployment-image {
+  display: inline-block;
+  position: absolute;
+  top: 0;
+  left: -4rem;
+  background-color: #eee;
+  width: 4rem;
+  height: 4rem;
+}
+body > main.deployment-information > header.deployment-state-jumbo > div {
+  position: relative;
+  font-size: 2rem;
+  margin-left: 1rem;
+  display: inline-block;
+  width: 4rem;
+  line-height: 4rem;
+  height: 4rem;
+  background-color: #eee;
+  color: #fff;
+  text-align: center;
+}
+body > main.deployment-information > header.deployment-state-jumbo > div:after {
+  text-shadow: none;
+  line-height: 1rem;
+  font-weight: bold;
+  width: 100%;
+  font-size: 0.6rem;
+  color: #252a2e;
+  left: 0;
+  bottom: -1.2rem;
+  position: absolute;
+  text-transform: uppercase;
+}
+body > main.deployment-information > header.deployment-state-jumbo > div.desired {
+  color: #252a2e;
+}
+body > main.deployment-information > header.deployment-state-jumbo > div.desired:after {
+  content: "Desired";
+}
+body > main.deployment-information > header.deployment-state-jumbo > div.current {
+  background-color: #ffa51c;
+}
+body > main.deployment-information > header.deployment-state-jumbo > div.current:after {
+  content: "Current";
+}
+body > main.deployment-information > header.deployment-state-jumbo > div.available {
+  background-color: #ffa51c;
+}
+body > main.deployment-information > header.deployment-state-jumbo > div.available:after {
+  content: "Available";
+}
+body > main.deployment-information > header.deployment-state-jumbo > div.ok {
+  background-color: #00cb6d;
+}
+body > main.deployment-information > table {
+  border: solid 1px #eee;
+  color: #252a2e;
+  border-collapse: collapse;
+}
+body > main.deployment-information > table > tbody > tr {
+  line-height: 2rem;
+}
+body > main.deployment-information > table > tbody > tr > td {
+  padding: 0 1rem;
+}
+body > main.deployment-information > table > tbody > tr > td a {
+  cursor: pointer;
+  color: #0087E2;
+}
+body > main.deployment-information > table > tbody > tr > td a:hover {
+  text-decoration: underline;
+}
+body > main.deployment-information > table > tbody > tr:nth-child(even) {
+  background-color: #eee;
+}
+body > main.deployment-information > h1 {
+  color: #252a2e;
+  margin: 1rem 0 1rem;
+  font-size: 1.5rem;
+}
+body > main.deployment-information > ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+body > main.deployment-information > ul > li {
+  margin: 0.2rem 0 0.2rem;
+  padding: 0;
+}
+body > main.deployment-information > ul > li > span.caption {
+  display: inline-block;
+  width: 7rem;
+}
+body > main.deployment-information > ul > li > span.online-status {
+  display: inline-block;
+  text-transform: uppercase;
+  color: #fff;
+  background-color: #ff2844;
+  font-size: 0.6rem;
+  line-height: 1rem;
+  padding: 0 0.2rem;
+}
+body > main.deployment-information > ul > li > span.online-status.online {
+  background-color: #00cb6d;
+}
+body > main.focus-deployment-revision {
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+}
+body > main.focus-deployment-revision > header {
+  flex-grow: 0;
+  padding: 0 0 2rem 0;
+}
+body > main.focus-deployment-revision > header > time {
+  font-size: 0.8rem;
+  font-style: italic;
+}
+body > main.focus-deployment-revision > code {
+  flex-grow: 1;
+  position: relative;
+  overflow: scroll;
+  height: 100%;
+}
+body > main.deployment-list > ul {
+  display: flex;
+  flex-direction: column;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+body > main.deployment-list > ul > li {
+  border-bottom: solid 1px #e2e4e8;
+}
+body > main.deployment-list > ul > li:last-child {
+  border-bottom: none;
+}
+body > main.deployment-list > ul > li > div.deployment {
+  font-size: 0.9rem;
+  line-height: 4rem;
+  position: relative;
+  padding: 0 0 0 3.5rem;
+  white-space: nowrap;
+}
+body > main.deployment-list > ul > li > div.deployment span.deployment-name {
+  cursor: pointer;
+}
+body > main.deployment-list > ul > li > div.deployment span.deployment-name:hover {
+  text-decoration: underline;
+}
+body > main.deployment-list > ul > li > div.deployment span.deployment-name.inactive:hover {
+  text-decoration: line-through;
+}
+body > main.deployment-list > ul > li > div.deployment span.deployment-name {
+  color: #0087E2;
+}
+body > main.deployment-list > ul > li > div.deployment span.deployment-name.inactive {
+  color: #49b6ff;
+}
+body > main.deployment-list > ul > li > div.deployment > div > span {
+  font-weight: bold;
+}
+body > main.deployment-list > ul > li > div.deployment > div > a {
+  color: #0087E2;
+}
+body > main.deployment-list > ul > li > div.deployment > div > a:hover {
+  text-decoration: underline;
+  cursor: pointer;
+}
+body > main.deployment-list > ul > li > div.deployment > img {
+  position: absolute;
+  top: 50%;
+  left: 1rem;
+  border-radius: 16px;
+  background-color: #ddd;
+  transform: translateY(-50%);
+}
+body > main.deployment-list > ul > li > div.deployment > time {
+  font-size: 0.7rem;
+  position: absolute;
+  top: 50%;
+  right: 1rem;
+  transform: translateY(-50%);
 }
