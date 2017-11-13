@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "start": "node server.js",
+    "install": "lessc ./public/css/flat_list.less ./public/css/flat_list.css"
   },
   "keywords": [],
   "author": "Tal Weinfeld",
@@ -17,5 +18,8 @@
     "kubemote": "git+ssh://git@github.com/codefresh-io/kubemote.git",
     "lodash": "^4.17.4",
     "split": "^1.0.1"
+  },
+  "devDependencies": {
+    "less": "^2.7.3"
   }
 }
