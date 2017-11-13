@@ -5,9 +5,9 @@ const
     express = require('express'),
     Kubemote = require('kubemote');
 
-let
-    kubeClient = new Kubemote(Kubemote.CONFIGURATION_FILE()),
-    app = express();
+let app = express();
+    //kubeClient = new Kubemote(Kubemote.CONFIGURATION_FILE()),
+
 
 /*let rawLogStream = kefir
     .stream(({ emit })=> {
