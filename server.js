@@ -26,7 +26,7 @@ let eventBufferProperty = eventStream
 
 eventBufferProperty.onValue(_.noop); // Activates constant buffer
 
-app.get('/log_real', (req, res)=> {
+app.get('/log', (req, res)=> {
     res.set({
         "Cache-Control": "no-cache",
         "Content-Type": "text/event-stream",
@@ -46,9 +46,6 @@ app.get('/log_real', (req, res)=> {
         .onValue(res.write.bind(res));
 });
 
-app.get('/log', (req, res)=> {
-    res.sendFile(path.join(__dirname, './data/dump.jsonl'));
-});
 app.use(express.static('public'));
 app.use('/', (req, res)=> {
     res.sendFile(path.join(__dirname, './index.html'));

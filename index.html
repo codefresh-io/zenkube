@@ -87,12 +87,7 @@
             .toProperty();
 
         let rawStream = Kefir
-            .fromEvents(new EventSource("/log_real"), 'data', _.flow(_.property('data'), JSON.parse));
-
-            //.fromPromise(fetch('/log').then((res)=> res.text()).then(_.partial(_.split, _, '\n')))
-            //.flatten()
-            //.map(_.partial(_.attempt, JSON.parse))
-            //.filter(_.negate(_.isError));
+            .fromEvents(new EventSource("/log"), 'data', _.flow(_.property('data'), JSON.parse));
 
         let deploymentsProperty = rawStream
             .slidingWindow(VISUAL_BUFFER_SIZE)
