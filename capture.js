@@ -14,7 +14,7 @@ let deploymentEventStream = kefir
     .fromPromise(client.watchDeploymentList())
     .flatMap(()=> kefir.fromEvents(client, 'watch'))        //"ADDED", "MODIFIED", "DELETED", "ERROR"
     .onValue((event)=> {
-        let payload = { time: Date.now(), event };
+        let payload = { timestamp: Date.now(), event };
         outputFile.write([JSON.stringify(payload), "\n"].join(''));
         console.log(_.truncate(JSON.stringify(payload, 30)));
     });
