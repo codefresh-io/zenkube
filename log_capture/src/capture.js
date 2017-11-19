@@ -16,5 +16,4 @@ let deploymentEventStream = kefir
     .onValue((event)=> {
         let payload = { timestamp: Date.now(), event };
         outputFile.write([JSON.stringify(payload), "\n"].join(''));
-        console.log(_.truncate(JSON.stringify(payload, 30)));
     });

@@ -46,8 +46,8 @@ app.get('/log', (req, res)=> {
         .onValue(res.write.bind(res));
 });
 
-app.use(express.static('public'));
-app.use('/', (req, res)=> {
-    res.sendFile(path.join(__dirname, './index.html'));
+app.use(express.static(path.join(__dirname, '../../client/build')));
+app.use((req, res)=> {
+    res.sendFile(path.join(__dirname, '../../client/build/index.html'));
 });
 app.listen(8080);
