@@ -8,13 +8,13 @@ import {
     MAIN_PAGE_DEPLOYMENT_REVISION_VIEW,
     MAIN_PAGE_DEPLOYMENT_INFO_VIEW
 } from "./control/constant";
-import ReactDom from "react-dom";
 
 import "../style/main.less";
-
 //import EventSource from "./eventsource_mock"; // <-- REMOVE THIS LINE BEFORE FLIGHT !!!
 
-const VISUAL_BUFFER_SIZE = 5000;
+const
+    VISUAL_BUFFER_SIZE = 5000,
+    MINUTE = 1000 * 60;
 
 const
     basePath = "/",
@@ -150,9 +150,11 @@ Kefir
     .combine([
         uiStateProperty,
         deploymentsProperty,
-        domReadyProperty
+        domReadyProperty,
+        Kefir.fromPoll(MINUTE, Date.now).toProperty(Date.now)  // Constant tick for all relative time captions
     ])
-    .onValue(function([uiState, deployments = [], mainElement]){
+    .debounce()
+    .onValue(function([uiState, deployments = [], mainElement, t]){
         return ReactDOM.render(bodyView(
             uiState,
             deployments,
