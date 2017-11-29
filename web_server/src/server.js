@@ -18,7 +18,7 @@ let eventStream = kefir
         });
         return () => destroy();
     })
-    .flatMap(() => kefir.fromEvents(kubeClient, 'watch').map((event) => ({ timestamp: Date.now(), event })));
+    .flatMap(() => kefir.fromEvents(kubeClient, 'watch').filter(_.matchesProperty('object.kind', 'Deployment')).map((event) => ({ timestamp: Date.now(), event })));
 
 let eventBufferProperty = eventStream
     .slidingWindow(5000)
