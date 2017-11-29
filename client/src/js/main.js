@@ -154,7 +154,7 @@ Kefir
         Kefir.fromPoll(MINUTE, Date.now).toProperty(Date.now)  // Constant tick for all relative time captions
     ])
     .debounce()
-    .onValue(function([uiState, deployments = [], mainElement, t]){
+    .onValue(function([uiState, deployments = [], mainElement]){
         return ReactDOM.render(bodyView(
             uiState,
             deployments,
