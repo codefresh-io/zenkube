@@ -14,7 +14,7 @@ export default function(uiState, deployments, {
     onBack = _.noop
 }){
     return [
-        pageHeader(uiState, deployments, onBack),
+        pageHeader(uiState, deployments, onBack, onDeploymentSelect),
         (function(){
             switch (uiState["main_page"]){
                 case MAIN_PAGE_DEPLOYMENT_LIST:
