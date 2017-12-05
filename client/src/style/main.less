@@ -17,7 +17,7 @@ code {
   color: @text-color;
   border: solid 1px lighten(@text-color, 50%);
   display: block;
-  width: 100%;
+  //width: 100%;
   overflow: scroll;
   white-space: pre;
   padding: 0.5rem;
@@ -257,6 +257,7 @@ body {
     padding: 2rem;
     display: flex;
     flex-direction: column;
+
     > header {
       flex-grow: 0;
       padding: 0 0 2rem 0;
@@ -266,12 +267,127 @@ body {
       }
     }
 
-    > code {
-      flex-grow: 1;
+    div.pane {
+
+      flex-grow: 2;
+      display: flex;
+      flex-direction: row;
       position: relative;
-      overflow: scroll;
-      height: 100%;
+
+      > code {
+        flex-grow: 1;
+        overflow: scroll;
+        width: 100%;
+      }
+
+      > ul.revision-selector {
+        flex-grow: 0;
+        flex-shrink: 0;
+        width: 10rem;
+        color: @text-color;
+        background-color: @light-background-color;
+        overflow-y: auto;
+
+        list-style: none;
+        &, > li {
+          padding: 0;
+          margin: 0;
+        }
+
+        > li {
+          display: block;
+          position: relative;
+          height: 3rem;
+          border-bottom: solid 1px @background-color;
+
+          &.select {
+            > button {
+              > span, time {
+                color: @commit-text-color;
+              }
+              background-color: lighten(@light-background-color, 5%);
+              > i:after {
+                opacity: 1;
+                width: 0.7rem;
+                height: 0.7rem;
+              }
+            }
+          }
+
+          > button {
+            &:focus {
+              outline: none;
+              box-shadow: inset 0 0 0 1px rgba(0,0,0,0.2);
+              &::-moz-focus-inner {
+                border: 0;
+              }
+            }
+
+            color: inherit;
+            margin: 0;
+            text-align: inherit;
+            font-family: inherit;
+            font-size: inherit;
+            width: 100%;
+            display: block;
+            border: none;
+            background-color: @light-background-color;
+            box-sizing: border-box;
+            padding: 0 0 0 2.6rem;
+            height:  100%;
+            position: absolute;
+            cursor: pointer;
+            transition: background-color 0.2s;
+
+            > i {
+              box-sizing: content-box;
+              display: block;
+              position: absolute;
+              top: 50%;
+              left: 0.7rem;
+              width: 1rem;
+              height: 1rem;
+              border-radius: 1rem;
+              border: solid 2px @commit-text-color;
+              transform: translate(0, -50%);
+
+              &:after {
+                display: block;
+                content: "";
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: 0.2rem;
+                height: 0.2rem;
+                background-color: @commit-text-color;
+                border-radius: inherit;
+                transition: width 0.2s, height 0.2s, opacity 0.2s;
+                opacity: 0;
+              }
+            }
+
+            > span {
+              color: inherit;
+              position: absolute;
+              left: 2.6rem;
+              top: 5px;
+              font-weight: bold;
+            }
+
+            > time {
+              display: inline-block;
+              bottom: 7px;
+              left: 2.6rem;
+              position: absolute;
+              font-size: 0.6rem;
+            }
+          }
+        }
+      }
     }
+
+
   }
 
   > main.deployment-list {
