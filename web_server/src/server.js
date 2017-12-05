@@ -3,11 +3,10 @@ const
     path = require('path'),
     kefir = require('kefir'),
     express = require('express'),
-    Kubemote = require('kubemote');
+    Kubemote = require('kubemotelib');
 
 let app = express(),
     kubeClient = new Kubemote(Kubemote.CONFIGURATION_FILE());
-
 
 let eventStream = kefir
     .stream(({emit}) => {

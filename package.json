@@ -1,6 +1,6 @@
 {
   "name": "zenkube",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "K8 Deployments Monitoring Utility",
   "main": "index.js",
   "scripts": {
@@ -15,7 +15,7 @@
     "express": "^4.16.2",
     "flat": "^4.0.0",
     "kefir": "^3.7.4",
-    "kubemote": "git+ssh://git@github.com/codefresh-io/kubemote.git",
+    "kubemotelib": "^1.0.5",
     "lodash": "^4.17.4",
     "split": "^1.0.1"
   },

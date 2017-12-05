@@ -4,7 +4,7 @@ const
     path = require('path'),
     util = require('util'),
     kefir = require('kefir'),
-    Kubemote = require('kubemote');
+    Kubemote = require('kubemotelib');
 
 let
     client = new Kubemote(Kubemote.CONFIGURATION_FILE()),
