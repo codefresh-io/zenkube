@@ -19,7 +19,7 @@ export default (uiStateObj, deployments, onRevisionSelect = _.noop)=> {
     return main(
         { key: "main", className: "focus-deployment-revision" }, [],
         div({ className: "pane" }, [], ...[
-            deploymentRevisionSelector(uiStateObj, currentDeployment["revision"], onRevisionSelect),
+            deploymentRevisionSelector(uiStateObj, currentDeployment["revision"].slice(0).reverse(), onRevisionSelect),
             code({}, toReactYAML(_(currentRevision).chain().get('spec').value(), diff)) //diffRev
         ])
     );

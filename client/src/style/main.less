@@ -272,12 +272,13 @@ body {
       flex-grow: 2;
       display: flex;
       flex-direction: row;
-      position: relative;
+      justify-content: flex-start;
+      align-items: stretch;
 
       > code {
         flex-grow: 1;
-        overflow: scroll;
-        width: 100%;
+        overflow: auto;
+        //width: 100%;
       }
 
       > ul.revision-selector {
@@ -287,9 +288,12 @@ body {
         color: @text-color;
         background-color: @light-background-color;
         overflow-y: auto;
-
+        box-sizing: border-box;
         list-style: none;
-        &, > li {
+        padding: 0;
+        margin: 0 2px 0 0 ;
+
+        > li {
           padding: 0;
           margin: 0;
         }
@@ -305,7 +309,7 @@ body {
               > span, time {
                 color: @commit-text-color;
               }
-              background-color: lighten(@light-background-color, 5%);
+              background-color: darken(@light-background-color, 5%);
               > i:after {
                 opacity: 1;
                 width: 0.7rem;
@@ -337,7 +341,8 @@ body {
             height:  100%;
             position: absolute;
             cursor: pointer;
-            transition: background-color 0.2s;
+            transition: background-color 0.5s;
+            transition-timing-function: ease-in;
 
             > i {
               box-sizing: content-box;
