@@ -6,7 +6,7 @@ const
     Kubemote = require('kubemotelib');
 
 let app = express(),
-    kubeClient = new Kubemote(Kubemote.CONFIGURATION_FILE());
+    kubeClient = new Kubemote(Kubemote.IN_CLUSTER_CONFIGURATION());
 
 let eventStream = kefir
     .stream(({emit}) => {
