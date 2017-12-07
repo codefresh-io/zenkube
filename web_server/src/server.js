@@ -34,7 +34,7 @@ app.get('/log', (req, res)=> {
 
     kefir
         .concat([
-            eventBufferProperty.flatten(),
+            eventBufferProperty.take(1).flatten(),
             eventStream
         ])
         .map((event) => [
