@@ -14,21 +14,20 @@ export default (uiState, deployments, onRevisionSelect = _.noop, onDeploymentSel
             _(deployments)
                 .map(({ id, name, revision, destroy, online })=> revision.map((rev)=> _.assign({ id, name, destroy, online }, rev)))
                 .flatten()
+                .sortBy('create')
                 .reverse()
-                .value()
                 .map(({ id, create, hash, name, destroy, online })=> li(
                     { key: [id, hash].join('-') }, [],
                     div({ className: "deployment" }, [],
                         roboHash({ id }),
                         div({ className: "name" }, [],
-                            //i({ title: online ? "Last status was OK" : "Last status failed or not available", className: _.compact(["deployment-status", online && "online"]).join(' ') }),
                             deploymentName({ id, name, destroy }, _.partial(onDeploymentSelect, { id })),
                             " was committed a new change " ,
                             a({ onClick: _.partial(onRevisionSelect, { id, hash }) }, [], ["#", hash.toString(16)])
                         ),
                         time({}, moment(create).fromNow())
                     )
-                    )
-                )
+                ))
+                .value()
         )
     );
