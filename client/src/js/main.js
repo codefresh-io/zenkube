@@ -114,8 +114,12 @@ let deploymentsProperty = Kefir
                             hash: MurmurHash3(JSON.stringify(spec)).result(),
                             spec
                         }))
-                        .uniqBy('hash')
-                        .value(),
+                        .reduce((ac, cur)=> _.get(_.last(ac), 'hash') !== cur["hash"] ? ac.concat([cur]) : ac, [])
+                        .map(({ spec, hash, create })=> ({
+                            create,
+                            hash: MurmurHash3(JSON.stringify(_.assign({ _create: create }, spec))).result(),
+                            spec
+                        })),
                     online: _(events).chain().clone().reverse().map(_.flow(_.property('event.object.status.conditions'), _.partial(_.find, _, { type: "Available" }))).first().thru(({ status } = {})=> status === "True").value(),
                     destroy: _(events).chain().find({ event: { type: "DELETED" }}).get('timestamp').thru((utcStr)=> utcStr && new Date(utcStr)).value(),
                     raw: events
