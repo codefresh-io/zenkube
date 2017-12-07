@@ -89,6 +89,24 @@ body {
   height: 100%;
   flex-direction: column;
 
+  > div.offline {
+    color: @light-background-color;
+    box-sizing: border-box;
+    box-shadow: inset 0 0 50px 21px rgba(0,0,0,0.03);
+    width: 100%;
+    height: 100%;
+    background-color: @color-bad;
+    padding: 2rem;
+    > h1 {
+      font-size: 1.2rem;
+      white-space: pre;
+      font-family: Courier;
+    }
+    > p {
+      margin: 0;
+    }
+  }
+
   > header {
     background-color: @header-background-color;
     flex-shrink: 0;

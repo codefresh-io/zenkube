@@ -67,11 +67,22 @@ let backStream = ui.stream
     .merge(urlStream.filter((url)=> url === basePath))
     .map(_.constant({ "main_page": MAIN_PAGE_DEPLOYMENT_LIST }));
 
+let serverUpdatesEmitter = new EventSource("/log");
+
+let rawStream = Kefir
+    .fromEvents(serverUpdatesEmitter, 'data', _.flow(_.property('data'), JSON.parse));
+
+let serverUpdatesOnlineProperty = Kefir
+    .merge(["open", "error"].map((eventName)=> Kefir.fromEvents(serverUpdatesEmitter, eventName).map(_.constant(eventName === "open"))))
+    .skipDuplicates()
+    .toProperty();
+
 let uiStateProperty = Kefir
     .merge([
         focusChangeStream,
         deploymentInformationStream,
-        backStream
+        backStream,
+        serverUpdatesOnlineProperty.map((online)=> ({ online }))
     ])
     .scan((ac, cur)=> _.merge({}, ac, cur), {
         "main_page": MAIN_PAGE_DEPLOYMENT_LIST,
@@ -80,11 +91,9 @@ let uiStateProperty = Kefir
     })
     .toProperty();
 
-let rawStream = Kefir
-    .fromEvents(new EventSource("/log"), 'data', _.flow(_.property('data'), JSON.parse));
-
 let deploymentsProperty = rawStream
     .slidingWindow(VISUAL_BUFFER_SIZE)
+    .merge(serverUpdatesOnlineProperty.filter(_.negate(Boolean)).map(_.constant([])))
     .debounce()
     .map(_.partial(_.sortBy, _, 'timestamp'))
     .map((buffer)=> {
@@ -163,5 +172,5 @@ Kefir
                 onDeploymentSelect: ({ id })=> ui.send({ type: "focus-deployment-information", id }),
                 onBack: ()=> ui.send({ type: "show_deployment_list" })
             }
-        ), mainElement, );
+        ), mainElement);
     });
