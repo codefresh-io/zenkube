@@ -91,10 +91,14 @@ let uiStateProperty = Kefir
     })
     .toProperty();
 
-let deploymentsProperty = rawStream
-    .slidingWindow(VISUAL_BUFFER_SIZE)
-    .merge(serverUpdatesOnlineProperty.filter(_.negate(Boolean)).map(_.constant([])))
-    .debounce()
+let deploymentsProperty = Kefir
+    .repeat((function(droppedConnectionEventStream){
+        // Takes care of resetting the local buffer each time the server connection drops
+        return ()=> rawStream
+                .slidingWindow(VISUAL_BUFFER_SIZE)
+                .takeUntilBy(droppedConnectionEventStream.take(1));
+    })(serverUpdatesOnlineProperty.changes().filter(_.negate(Boolean))))
+    .debounce(50)
     .map(_.partial(_.sortBy, _, 'timestamp'))
     .map((buffer)=> {
         return _(buffer)
