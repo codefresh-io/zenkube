@@ -1,7 +1,7 @@
 {
   "name": "zenkube",
-  "version": "1.0.1",
-  "description": "K8 Deployments Monitoring Utility",
+  "version": "1.0.2",
+  "description": "Your deployments have faces, and history - get to know them!",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
