@@ -67,6 +67,10 @@ let backStream = ui.stream
     .merge(urlStream.filter((url)=> url === basePath))
     .map(_.constant({ "main_page": MAIN_PAGE_DEPLOYMENT_LIST }));
 
+let filterDeploymentStream = ui.stream
+    .filter(_.matchesProperty('type', 'filter-deployment'))
+    .map(({ term })=> ({ "filter_deployment_name": term }));
+
 let serverUpdatesEmitter = new EventSource("/log");
 
 let rawStream = Kefir
@@ -82,12 +86,19 @@ let uiStateProperty = Kefir
         focusChangeStream,
         deploymentInformationStream,
         backStream,
+        filterDeploymentStream,
+        ((keywordStream)=>
+            keywordStream
+                .flatMapLatest((keyword)=> Kefir.later(keyword ? 300 : 0, keyword))
+                .map((filter_deployment_name_active)=>({ filter_deployment_name_active }))
+        )(filterDeploymentStream.map(_.property('filter_deployment_name'))),
         serverUpdatesOnlineProperty.map((online)=> ({ online }))
     ])
     .scan((ac, cur)=> _.merge({}, ac, cur), {
         "main_page": MAIN_PAGE_DEPLOYMENT_LIST,
         "focused_deployment_id": undefined,
-        "focused_deployment_revision": undefined
+        "focused_deployment_revision": undefined,
+        "filter_deployment_name": undefined
     })
     .toProperty();
 
@@ -178,7 +189,8 @@ Kefir
             {
                 onRevisionSelect: ({ id, hash })=> ui.send({ type: "focus-deployment-revision", id, hash }),
                 onDeploymentSelect: ({ id })=> ui.send({ type: "focus-deployment-information", id }),
-                onBack: ()=> ui.send({ type: "show_deployment_list" })
+                onBack: ()=> ui.send({ type: "show_deployment_list" }),
+                onDeploymentFilter: (term)=> ui.send({ type: "filter-deployment", term })
             }
         ), mainElement);
     });

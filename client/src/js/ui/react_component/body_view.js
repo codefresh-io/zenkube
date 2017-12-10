@@ -13,7 +13,8 @@ import {
 export default function(uiState, deployments, {
     onRevisionSelect = _.noop,
     onDeploymentSelect = _.noop,
-    onBack = _.noop
+    onBack = _.noop,
+    onDeploymentFilter = _.noop
 }){
     if(!uiState["online"]){
         return offlinePage();
@@ -23,7 +24,7 @@ export default function(uiState, deployments, {
             (function(){
                 switch (uiState["main_page"]){
                     case MAIN_PAGE_DEPLOYMENT_LIST:
-                        return deploymentListPage(uiState, deployments, onRevisionSelect, onDeploymentSelect);
+                        return deploymentListPage(uiState, deployments, onRevisionSelect, onDeploymentSelect, onDeploymentFilter);
                         break;
                     case MAIN_PAGE_DEPLOYMENT_REVISION_VIEW:
                         return deploymentRevisionPage(uiState, deployments, onRevisionSelect);

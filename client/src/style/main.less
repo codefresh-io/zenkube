@@ -415,6 +415,17 @@ body {
 
   > main.deployment-list {
 
+    > header {
+      background-color: @light-background-color;
+      margin: 0;
+      padding: 1rem;
+      > input {
+        color: @text-color;
+        width: 100%;
+        font-size: 0.9rem;
+      }
+    }
+
     > ul {
       display: flex;
       flex-direction: column;
@@ -433,20 +444,19 @@ body {
 
           span.deployment-name {
             cursor: pointer;
+            color: @commit-text-color;
             &:hover {
               text-decoration: underline;
             }
             &.inactive {
               &:hover {
                 text-decoration: line-through;
+                color: lighten(@commit-text-color, 20%);
               }
             }
-          }
 
-          span.deployment-name {
-            color: @commit-text-color;
-            &.inactive {
-              color: lighten(@commit-text-color, 20%);
+            > span {
+              background-color: yellow;
             }
           }
 
