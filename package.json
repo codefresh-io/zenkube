@@ -1,6 +1,6 @@
 {
   "name": "zenkube",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Your deployments have faces, and history - get to know them!",
   "main": "index.js",
   "scripts": {
@@ -12,6 +12,7 @@
   "author": "Tal Weinfeld",
   "license": "ISC",
   "dependencies": {
+    "compression": "^1.7.1",
     "express": "^4.16.2",
     "flat": "^4.0.0",
     "kefir": "^3.7.4",

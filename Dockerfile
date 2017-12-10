@@ -6,4 +6,4 @@ WORKDIR /srv
 RUN npm i
 RUN npm run build
 EXPOSE 8080
-CMD npm start
+CMD npm start -- --in-cluster
