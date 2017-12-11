@@ -17,7 +17,6 @@ code {
   color: @text-color;
   border: solid 1px lighten(@text-color, 50%);
   display: block;
-  //width: 100%;
   overflow: scroll;
   white-space: pre;
   padding: 0.5rem;
@@ -50,28 +49,15 @@ code {
   }
 }
 
+span.highlight {
+  background-color: yellow;
+}
+
 span.deployment-name {
   &.inactive {
     text-decoration: line-through;
   }
 }
-
-/*i.deployment-status {
-
-  display: inline-block;
-  width: 1rem;
-  height: 1rem;
-  background-repeat: no-repeat;
-  background-size: contain;
-  background-position: center;
-  background-image: @image-alert;
-  vertical-align: middle;
-  background-clip: content-box;
-  padding: 0 0.3rem 0 0.3rem;
-  &.online {
-    background-image: @image-check;
-  }
-}*/
 
 html {
   padding: 0;
@@ -415,6 +401,8 @@ body {
 
   > main.deployment-list {
 
+    padding: 0;
+
     > header {
       background-color: @light-background-color;
       margin: 0;
@@ -423,6 +411,7 @@ body {
         color: @text-color;
         width: 100%;
         font-size: 0.9rem;
+        padding: 0.1rem;
       }
     }
 
@@ -431,7 +420,7 @@ body {
       flex-direction: column;
       list-style: none;
       margin: 0;
-      padding: 0;
+      padding: 1rem;
 
       > li {
         border-bottom: solid 1px @deployment-list-separation-line-color;
@@ -453,10 +442,6 @@ body {
                 text-decoration: line-through;
                 color: lighten(@commit-text-color, 20%);
               }
-            }
-
-            > span {
-              background-color: yellow;
             }
           }
 

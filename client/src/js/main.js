@@ -63,13 +63,13 @@ let deploymentInformationStream = ui.stream
     }));
 
 let backStream = ui.stream
-    .filter(_.matches({ type: "show_deployment_list" }))
+    .filter(_.matches({ type: "show-deployment-list" }))
     .merge(urlStream.filter((url)=> url === basePath))
     .map(_.constant({ "main_page": MAIN_PAGE_DEPLOYMENT_LIST }));
 
 let filterDeploymentStream = ui.stream
-    .filter(_.matchesProperty('type', 'filter-deployment'))
-    .map(({ term })=> ({ "filter_deployment_name": term }));
+    .filter(_.matchesProperty('type', 'request-filter-deployment'))
+    .map(_.property('term'));
 
 let serverUpdatesEmitter = new EventSource("/log");
 
@@ -86,12 +86,11 @@ let uiStateProperty = Kefir
         focusChangeStream,
         deploymentInformationStream,
         backStream,
-        filterDeploymentStream,
-        ((keywordStream)=>
-            keywordStream
-                .flatMapLatest((keyword)=> Kefir.later(keyword ? 300 : 0, keyword))
-                .map((filter_deployment_name_active)=>({ filter_deployment_name_active }))
-        )(filterDeploymentStream.map(_.property('filter_deployment_name'))),
+        filterDeploymentStream.map((term)=> ({ "filter_field_value": term })),
+        filterDeploymentStream
+            .map(_.flow(_.trim, _.toLower))
+            .flatMapLatest((keyword)=> Kefir.later(keyword ? 300 : 0, keyword))
+            .map((filter_deployment_name_active)=>({ filter_deployment_name_active })),
         serverUpdatesOnlineProperty.map((online)=> ({ online }))
     ])
     .scan((ac, cur)=> _.merge({}, ac, cur), {
@@ -189,8 +188,8 @@ Kefir
             {
                 onRevisionSelect: ({ id, hash })=> ui.send({ type: "focus-deployment-revision", id, hash }),
                 onDeploymentSelect: ({ id })=> ui.send({ type: "focus-deployment-information", id }),
-                onBack: ()=> ui.send({ type: "show_deployment_list" }),
-                onDeploymentFilter: (term)=> ui.send({ type: "filter-deployment", term })
+                onBack: ()=> ui.send({ type: "show-deployment-list" }),
+                onDeploymentFilter: (term)=> ui.send({ type: "request-filter-deployment", term })
             }
         ), mainElement);
     });

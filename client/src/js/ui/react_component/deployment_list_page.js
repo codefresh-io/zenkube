@@ -3,6 +3,7 @@ import moment from "moment";
 import React from "react";
 import roboHash from "./robohash";
 import deploymentName from "./deployment_name";
+import highlightString from "./highlight_string";
 
 const [main, ul, li, i, a, div, span, time, header, input] = ["main", "ul", "li", "i", "a", "div", "span", "time", "header", "input"].map((name)=> _.partial(React.createElement, name));
 
@@ -11,7 +12,7 @@ export default (uiState, deployments, onRevisionSelect = _.noop, onDeploymentSel
     return main(
         { key: "main", className: "deployment-list" },
         [],
-        header({}, [], input({ type: "search", placeholder: "Search deployment", value: uiState["filter_deployment_name"], onChange: _.flow(_.property('target.value'), _.trim, _.toLower, onDeploymentFilter) })),
+        header({}, [], input({ type: "search", placeholder: "Deployment name or revision", value: uiState["filter_field_value"], onChange: _.flow(_.property('target.value'), onDeploymentFilter) })),
         ul(
             {},
             _(deployments)
@@ -19,7 +20,7 @@ export default (uiState, deployments, onRevisionSelect = _.noop, onDeploymentSel
                 .flatten()
                 .sortBy('create')
                 .reverse()
-                .filter(searchTerm ? _.flow(_.property('name'), _.partial(_.includes, _, searchTerm)) : _.constant(true))
+                .filter(searchTerm ? ({ name, hash })=> _.some([name, hash.toString(16)], _.partial(_.includes, _, searchTerm)) : _.constant(true))
                 .map(({ id, create, hash, name, destroy, online })=> li(
                     { key: [id, hash].join('-') }, [],
                     div({ className: "deployment" }, [],
@@ -27,7 +28,7 @@ export default (uiState, deployments, onRevisionSelect = _.noop, onDeploymentSel
                         div({ className: "name" }, [],
                             deploymentName({ id, name, destroy }, _.partial(onDeploymentSelect, { id }), searchTerm),
                             " was committed a new change " ,
-                            a({ onClick: _.partial(onRevisionSelect, { id, hash }) }, [], ["#", hash.toString(16)])
+                            a({ onClick: _.partial(onRevisionSelect, { id, hash }) }, [], "#", ...highlightString(hash.toString(16), searchTerm))
                         ),
                         time({}, moment(create).fromNow())
                     )
