@@ -106,6 +106,9 @@ body {
 
     span.deployment-name {
       cursor: pointer;
+      &:hover {
+        text-decoration: underline;
+      }
     }
 
     > button {
@@ -400,8 +403,10 @@ body {
   }
 
   > main.deployment-list {
-
+    display: flex;
+    flex-direction: column;
     padding: 0;
+    flex-grow: 1;
 
     > header {
       background-color: @light-background-color;
@@ -415,12 +420,43 @@ body {
       }
     }
 
+    > div.not-found {
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-grow: 1;
+      overflow: hidden;
+      background-image: data-uri('not_found.svg');
+      background-size: 30vw;
+      background-position: bottom right -3vw;
+      background-repeat: no-repeat;
+
+      > div {
+        color: @text-color;
+        position: relative;
+        white-space: pre;
+        display: inline;
+        text-align: center;
+        line-height: 1.6rem;
+
+        > a {
+          color: @commit-text-color;
+          cursor: pointer;
+          &:hover {
+            text-decoration: underline;
+          }
+        }
+      }
+    }
+
     > ul {
       display: flex;
       flex-direction: column;
       list-style: none;
       margin: 0;
       padding: 1rem;
+      flex-grow: 1;
 
       > li {
         border-bottom: solid 1px @deployment-list-separation-line-color;
