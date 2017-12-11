@@ -32,10 +32,12 @@ export default (uiState, deployments, onRevisionSelect = _.noop, onDeploymentSel
     return main(
         { key: "main", className: "deployment-list" },
         [],
-        header({}, [], input({ type: "search", placeholder: "Deployment name or revision #", value: uiState["filter_field_value"], onChange: _.flow(_.property('target.value'), onDeploymentFilter) })),
-        filteredDeployments.length ? ul(
-            {},
-            filteredDeployments
-        ) : div({ className: "not-found" }, [], div({}, [], ..._.compact(["nothing's found.", deployments.length && ["\ntry to ", a({ onClick: _.partial(onDeploymentFilter, '') }, [], "clear the filter"), " to see additional deployments"]])))
+        ..._.compact([
+            deployments.length && header({}, [], input({ type: "search", placeholder: "Deployment name or revision #", value: uiState["filter_field_value"], onChange: _.flow(_.property('target.value'), onDeploymentFilter) })),
+            filteredDeployments.length ? ul(
+                {},
+                filteredDeployments
+            ) : div({ className: "not-found" }, [], div({}, [], ..._.compact([deployments.length ? "nothing's found." : "there seems to be\nno deployments here yet.", deployments.length && ["\ntry to ", a({ onClick: _.partial(onDeploymentFilter, '') }, [], "clear the filter"), " to see additional deployments"]])))
+        ])
     );
 };
