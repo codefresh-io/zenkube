@@ -7,6 +7,9 @@ const [main, header, h1, ul, li, code, span, div, table, tbody, td, tr, a] = ["m
 
 export default (uiState, deployments, onRevisionSelect = _.noop)=> {
     let currentDeployment = _.find(deployments, { id: uiState["focused_deployment_id"] });
+
+    if(!currentDeployment) return;
+
     return main({ key: "main", className: "deployment-information" }, [],
 
         h1({},[], 'Details'),
