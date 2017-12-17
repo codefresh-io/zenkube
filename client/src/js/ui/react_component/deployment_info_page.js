@@ -54,7 +54,7 @@ export default (uiState, deployments, onRevisionSelect = _.noop)=> {
                 )
             })
         )),
-        h1({},[], 'Logs'),
+        h1({},[], 'Conditions'),
         code({},[], ..._(currentDeployment["raw"]).map((entry)=>{
             return _.get(entry, 'event.object.status.conditions', []).map((o)=> _.assign({ timestamp: entry["timestamp"] }, o));
         }).flatten().map((condition)=>{
