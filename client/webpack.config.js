@@ -20,7 +20,7 @@ module.exports = {
         ]
     },
     plugins: [
-        new HtmlWebpackPlugin({ title: "Codefresh Kubernetes Control Center" }),
+        new HtmlWebpackPlugin({ title: "Zenkube" }),
         new UglifyJSPlugin({ sourceMap: true }),
         new webpack.DefinePlugin({ "process.env.NODE_ENV": JSON.stringify('production') })
     ]
