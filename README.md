@@ -15,7 +15,7 @@ kubectl port-forward $(kubectl get pods --template="{{ (index .items 0).metadata
 
 # Command line arguments
  - `--in-cluster` - When this flag is set, Zenkube will connect to K8's api using the configuration obtained from the container's environment vars. If this flag is omitted, Zenkube will look for local configuration (`~/.kube/config`).
- - `--context=[context]` - Sets a context (works only when `--in-cluster` is not set). 
+ - `--context=[context]` - Selects a configuration context (works when `--in-cluster` is not set). 
 
 Then simply use your browser to open `http://localhost:8080`, and be prepared to personally meet your deployments for the very first time! Can you feel the excitement?
 
