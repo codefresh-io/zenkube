@@ -1,4 +1,4 @@
-FROM node:8.9.1
+FROM node:8.16.2
 ADD package.json /srv
 ADD web_server /srv/web_server
 ADD client /srv/client
